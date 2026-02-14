@@ -6,7 +6,203 @@ import {
   T,
   type TLShape,
 } from "@tldraw/tldraw";
-import { getYouTubeId } from "@/lib/utils/url-parser";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { getYouTubeId, isVideoUrl, isGifUrl } from "@/lib/utils/url-parser";
+
+// ── GIF pause/play + Video play button ─────────────────────────
+function ReferenceMedia({
+  thumbnailUrl,
+  url,
+  youtubeId,
+  isImage,
+  isGif,
+  isVideo,
+  title,
+}: {
+  thumbnailUrl: string;
+  url: string;
+  youtubeId: string | null;
+  isImage: boolean;
+  isGif: boolean;
+  isVideo: boolean;
+  title: string;
+}) {
+  const [gifPaused, setGifPaused] = useState(false);
+  const [staticFrame, setStaticFrame] = useState<string | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  const gifSrc = thumbnailUrl || url || "";
+
+  // Capture the first frame of a GIF for the paused state
+  const captureStaticFrame = useCallback(() => {
+    if (!gifSrc) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          setStaticFrame(canvas.toDataURL("image/png"));
+        }
+      } catch {
+        // CORS or other error — just leave null, GIF will keep playing
+      }
+    };
+    img.src = gifSrc;
+  }, [gifSrc]);
+
+  // Capture static frame on mount for GIFs
+  useEffect(() => {
+    if (isGif) captureStaticFrame();
+  }, [isGif, captureStaticFrame]);
+
+  const handleGifClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setGifPaused((prev) => !prev);
+  }, []);
+
+  const handleVideoClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (url) window.open(url, "_blank");
+    },
+    [url]
+  );
+
+  const imageSrc =
+    thumbnailUrl ||
+    (isImage ? url : "") ||
+    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "");
+
+  const displaySrc = isGif && gifPaused && staticFrame ? staticFrame : imageSrc;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {(thumbnailUrl || youtubeId || isImage) && (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+            background: "var(--color-muted, #1c1c22)",
+            position: "relative",
+            cursor: isGif ? "pointer" : isVideo ? "pointer" : "default",
+          }}
+          onClick={isGif ? handleGifClick : isVideo ? handleVideoClick : undefined}
+        >
+          <img
+            ref={imgRef}
+            src={displaySrc}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+
+          {/* GIF badge + pause/play indicator */}
+          {isGif && (
+            <>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  left: 6,
+                  background: "rgba(0,0,0,0.7)",
+                  color: "#fff",
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  padding: "2px 5px",
+                  borderRadius: "4px",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                GIF
+              </div>
+              {gifPaused && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: "rgba(0,0,0,0.6)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg width="14" height="16" viewBox="0 0 14 16" fill="white">
+                      <polygon points="2,0 14,8 2,16" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Video play button overlay */}
+          {isVideo && !isGif && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(0,0,0,0.65)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <svg width="16" height="18" viewBox="0 0 14 16" fill="white">
+                  <polygon points="2,0 14,8 2,16" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ padding: "8px 10px", flexShrink: 0 }}>
+        <div
+          style={{
+            fontSize: "12px",
+            fontWeight: 500,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {title || (() => { try { return new URL(url).hostname; } catch { return "Untitled"; } })()}
+        </div>
+        {url && (
+          <div style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)", marginTop: "2px" }}>
+            {(() => { try { return new URL(url).hostname; } catch { return url; } })()}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── Custom shape type declaration ──────────────────────────────
 declare module "@tldraw/tldraw" {
@@ -79,6 +275,8 @@ export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
     const tags = tagNames ? tagNames.split(",").filter(Boolean) : [];
     const youtubeId = url ? getYouTubeId(url) : null;
     const isImage = mediaType === "image" || /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?|$)/i.test(url || "");
+    const isGif = isGifUrl(url || "") || isGifUrl(thumbnailUrl || "");
+    const isVideo = isVideoUrl(url || "") || mediaType === "video" || mediaType === "youtube" || mediaType === "vimeo";
 
     return (
       <HTMLContainer
@@ -152,46 +350,15 @@ export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
 
         {/* ─── Reference (image-first) ─── */}
         {blockType === "reference" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            {(thumbnailUrl || youtubeId || isImage) && (
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: "hidden",
-                  background: "var(--color-muted, #1c1c22)",
-                }}
-              >
-                <img
-                  src={
-                    thumbnailUrl ||
-                    (isImage ? url : "") ||
-                    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "")
-                  }
-                  alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
-            )}
-            <div style={{ padding: "8px 10px", flexShrink: 0 }}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {title || (() => { try { return new URL(url).hostname; } catch { return "Untitled"; } })()}
-              </div>
-              {url && (
-                <div style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)", marginTop: "2px" }}>
-                  {(() => { try { return new URL(url).hostname; } catch { return url; } })()}
-                </div>
-              )}
-            </div>
-          </div>
+          <ReferenceMedia
+            thumbnailUrl={thumbnailUrl}
+            url={url}
+            youtubeId={youtubeId}
+            isImage={isImage}
+            isGif={isGif}
+            isVideo={isVideo}
+            title={title}
+          />
         )}
 
         {/* ─── Prompt / Note (sticky style) ─── */}

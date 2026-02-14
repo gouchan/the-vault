@@ -167,6 +167,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <item.icon className="h-4 w-4" />
             </Link>
           ))}
+          <button
+            onClick={handleCreateBoard}
+            className="flex items-center justify-center p-2 rounded-md transition-colors text-[var(--muted-foreground)] hover:bg-[var(--sticky-yellow)]/10 hover:text-[var(--sticky-yellow)]"
+            title="Add Board"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="flex-1" />

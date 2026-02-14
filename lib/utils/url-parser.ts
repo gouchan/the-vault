@@ -9,6 +9,15 @@ export function detectMediaType(url: string): MediaType {
   if (/vimeo\.com\//.test(lower)) {
     return "vimeo";
   }
+  if (/tiktok\.com/i.test(lower)) {
+    return "video";
+  }
+  if (/instagram\.com\/reel/i.test(lower)) {
+    return "video";
+  }
+  if (/snapchat\.com\/spotlight/i.test(lower)) {
+    return "video";
+  }
   if (/twitter\.com\/|x\.com\//.test(lower)) {
     return "tweet";
   }
@@ -20,6 +29,26 @@ export function detectMediaType(url: string): MediaType {
   }
 
   return "url";
+}
+
+/** Check if URL points to a video platform (YouTube, Vimeo, TikTok, Reels, Snapchat) */
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return (
+    /youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts/.test(lower) ||
+    /vimeo\.com\//.test(lower) ||
+    /tiktok\.com/i.test(lower) ||
+    /instagram\.com\/reel/i.test(lower) ||
+    /snapchat\.com\/spotlight/i.test(lower) ||
+    /\.(mp4|webm|mov|avi)(\?|$)/i.test(lower)
+  );
+}
+
+/** Check if URL points to a GIF file */
+export function isGifUrl(url: string): boolean {
+  if (!url) return false;
+  return /\.gif(\?|$)/i.test(url);
 }
 
 export function getYouTubeId(url: string): string | null {

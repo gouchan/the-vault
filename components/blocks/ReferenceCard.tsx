@@ -2,7 +2,7 @@
 
 import type { Block } from "@/types/block";
 import { Badge } from "@/components/ui/badge";
-import { getYouTubeId, getVimeoId } from "@/lib/utils/url-parser";
+import { getYouTubeId, getVimeoId, isVideoUrl } from "@/lib/utils/url-parser";
 import { ExternalLink, Play, Image as ImageIcon, Link2, Layers } from "lucide-react";
 
 export function ReferenceCard({ block, onClick }: { block: Block; onClick?: () => void }) {
@@ -23,9 +23,15 @@ export function ReferenceCard({ block, onClick }: { block: Block; onClick?: () =
             alt={block.title || block.og_title || ""}
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
           />
-          {(youtubeId || vimeoId || block.media_type === "video") && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="rounded-full bg-black/60 p-2">
+          {(youtubeId || vimeoId || block.media_type === "video" || isVideoUrl(block.url || "")) && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (block.url) window.open(block.url, "_blank");
+              }}
+            >
+              <div className="rounded-full bg-black/60 p-2 hover:bg-black/80 transition-colors">
                 <Play className="h-5 w-5 text-white" fill="white" />
               </div>
             </div>
