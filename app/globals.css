@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #0a0a0c;
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
+  --primary: #e4e4e7;
+  --primary-foreground: #18181b;
+  --secondary: #1c1c22;
+  --secondary-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #1c1c22;
+  --accent-foreground: #fafafa;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+  --radius: 0.5rem;
+}
+
+.light {
+  --background: #fafafa;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #18181b;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Moleskine dot grid background */
+.dot-grid {
+  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+:root {
+  --dot-color: rgba(255, 255, 255, 0.06);
+  --canvas-bg: #070709;
+  --canvas-dot: #333;
+}
+
+.light {
+  --dot-color: rgba(0, 0, 0, 0.08);
+  --canvas-bg: #f8f8f8;
+  --canvas-dot: #ccc;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* Masonry grid */
+.masonry-grid {
+  display: flex;
+  margin-left: -16px;
+  width: auto;
+}
+
+.masonry-grid_column {
+  padding-left: 16px;
+  background-clip: padding-box;
+}
+
+.masonry-grid_column > div {
+  margin-bottom: 16px;
+}
+
+/* ── tldraw theme overrides ───────────────────────────────── */
+/* Dark mode (default) — override tldraw's own --tl-color-background */
+:root .tl-container {
+  --tl-color-background: var(--background) !important;
+  --color-text: var(--foreground);
+  --color-low: var(--secondary);
+  --color-panel: var(--card);
+  --color-grid: rgba(255, 255, 255, 0.05);
+}
+
+/* Light mode */
+.light .tl-container {
+  --tl-color-background: var(--background) !important;
+  --color-text: var(--foreground);
+  --color-low: var(--secondary);
+  --color-panel: var(--card);
+  --color-grid: rgba(0, 0, 0, 0.06);
+}
+
+/* Moleskine dot grid on the tldraw canvas background */
+.tl-background {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px) !important;
+  background-size: 24px 24px !important;
+}
+
+.light .tl-background {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px) !important;
+  background-size: 24px 24px !important;
+}
+
+/* tldraw custom shape CSS variables for block rendering */
+:root {
+  --color-card: #0a0a0c;
+  --color-text: #fafafa;
+  --color-border: #27272a;
+  --color-muted: #1c1c22;
+  --color-muted-fg: #a1a1aa;
+  --color-note-bg: #1a1a0e;
+  --color-note-border: #3d3d1a;
+}
+
+.light {
+  --color-card: #ffffff;
+  --color-text: #09090b;
+  --color-border: #e4e4e7;
+  --color-muted: #f4f4f5;
+  --color-muted-fg: #71717a;
+  --color-note-bg: #fefce8;
+  --color-note-border: #fef08a;
+}
