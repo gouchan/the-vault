@@ -182,22 +182,22 @@ export default function BlockDetailPage() {
             {block.type === "person" && (
               <div className="mt-2 flex items-center gap-3">
                 {block.portfolio_url && (
-                  <a href={block.portfolio_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                  <a href={block.portfolio_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
                     <ExternalLink className="h-3 w-3" /> Portfolio
                   </a>
                 )}
                 {block.instagram && (
-                  <a href={`https://instagram.com/${block.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                  <a href={`https://instagram.com/${block.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
                     <Instagram className="h-3 w-3" /> {block.instagram}
                   </a>
                 )}
                 {block.twitter && (
-                  <a href={`https://x.com/${block.twitter.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                  <a href={`https://x.com/${block.twitter.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
                     <Twitter className="h-3 w-3" /> {block.twitter}
                   </a>
                 )}
                 {block.linkedin && (
-                  <a href={block.linkedin.startsWith("http") ? block.linkedin : `https://linkedin.com/in/${block.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                  <a href={block.linkedin.startsWith("http") ? block.linkedin : `https://linkedin.com/in/${block.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
                     <Linkedin className="h-3 w-3" /> LinkedIn
                   </a>
                 )}
@@ -206,7 +206,7 @@ export default function BlockDetailPage() {
 
             {/* URL for reference */}
             {block.url && (
-              <a href={block.url} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+              <a href={block.url} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
                 <ExternalLink className="h-3 w-3" /> {(() => { try { return new URL(block.url).hostname; } catch { return block.url; } })()}
               </a>
             )}

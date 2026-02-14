@@ -97,6 +97,41 @@ Development history of The Vault, built in collaboration with Claude Code over a
 
 ---
 
+## Phase 3.5 — UI Polish & Code Audit
+
+**Goal:** Refine the visual identity, fix layout issues, and harden the codebase with a meticulous audit.
+
+### What was built:
+- **Sticky yellow accent** throughout UI — tldraw selection, history timeline, sidebar highlights
+- **Collapsible sidebar** — toggle between expanded (224px) and icon-only (48px) states, persisted to localStorage
+- **Drag-reorder boards** — reorder boards in sidebar with drag handles, custom order saved to localStorage
+- **Pin boards** — pin/unpin boards to the top of the sidebar list with a single toggle icon
+- **Horizontal dot timeline** — redesigned history from vertical list to a horizontal dot-based scrub bar with hover tooltips
+- **Tighter Moleskine dot grid** — doubled density to 12px spacing with 0.8px dots for an authentic notebook feel
+- **Theme-aware pin icon** — yellow in dark mode, dark grey in light mode for proper contrast
+- **tldraw watermark hidden** — CSS override for `.tl-watermark_SEE-LICENSE`
+
+### Layout fixes:
+- **Toolbar overlap** — replaced fixed-height canvas (`calc(100vh - 180px)`) with flex layout where canvas takes remaining space and history panel sits below as `flex-shrink-0`
+- **Loading placeholder** — now uses `h-full` with `minHeight: 300px` instead of fixed calc
+
+### Code audit fixes:
+- Removed unused imports (TLEditorSnapshot, getCanvasPositions, useRef, useCallback)
+- Removed dead functions (handleCreateNote) and dead state (refreshKey, showHistory prop)
+- **Race condition** in preview exit — added `cancelled` flag pattern in async useEffect cleanup
+- **Timeout leak** — tracked fadeTimeout with ref, cleared on unmount
+- **React Hooks order violation** — moved `useMemo` above early returns in HistoryTimeline
+- **Event target safety** — replaced `e.target` with `e.currentTarget` for reliable positioning
+- **Sort performance** — moved `getBoardOrder()` call outside sort comparator (was re-reading localStorage on every comparison)
+- **Tooltip edge clamping** — CSS `clamp()` prevents tooltips from overflowing container
+
+### Bugs fixed:
+- **React Hooks order error** — `useMemo` placed after early returns caused hooks to fire in different order between renders. Moved above `if (loading)` guard
+- **Duplicate pin icons** — two separate elements (indicator + toggle) replaced with single button that changes color
+- **Pin contrast in light mode** — yellow on white was invisible; added `--pin-active` CSS variable (dark grey in light, yellow in dark)
+
+---
+
 ## Architecture Snapshot
 
 ```

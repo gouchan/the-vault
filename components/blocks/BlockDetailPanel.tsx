@@ -122,7 +122,7 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
           href={block.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
+          className="mt-3 flex items-center gap-1 text-sm text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]"
         >
           <ExternalLink className="h-3 w-3" />
           {new URL(block.url).hostname}
@@ -156,22 +156,22 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
       {block.type === "person" && (
         <div className="mt-4 flex flex-wrap gap-3">
           {block.portfolio_url && (
-            <a href={block.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
+            <a href={block.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
               Portfolio
             </a>
           )}
           {block.instagram && (
-            <a href={`https://instagram.com/${block.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
+            <a href={`https://instagram.com/${block.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
               Instagram
             </a>
           )}
           {block.twitter && (
-            <a href={`https://x.com/${block.twitter.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
+            <a href={`https://x.com/${block.twitter.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
               Twitter/X
             </a>
           )}
           {block.linkedin && (
-            <a href={block.linkedin.startsWith("http") ? block.linkedin : `https://linkedin.com/in/${block.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
+            <a href={block.linkedin.startsWith("http") ? block.linkedin : `https://linkedin.com/in/${block.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--sticky-yellow)] hover:text-[var(--sticky-yellow-dark)]">
               LinkedIn
             </a>
           )}

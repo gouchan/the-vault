@@ -11,11 +11,12 @@ Built with Next.js 16, Supabase, tldraw, and Tailwind CSS.
 - **Image Upload** — Drag-and-drop, paste, or file-pick images directly onto the canvas
 - **Connectors** — Draw arrows between blocks to sync shared fields (tags, URLs, descriptions)
 - **Auto-save** — Canvas state persists automatically with visual save indicator
-- **History Timeline** — Scrub through board evolution over time, restore past states
+- **History Timeline** — Horizontal dot timeline to scrub through board evolution, preview and restore past states
 - **OG Metadata** — Paste a URL and it auto-fetches title, description, and preview image
 - **Full-text Search** — Postgres-powered search across all blocks
 - **Command Palette** — `Cmd+K` to search, create, and navigate
 - **Light/Dark Mode** — Toggle between themes with Moleskine dot-grid background
+- **Collapsible Sidebar** — Expandable nav with drag-reorder boards, pin favorites to top
 - **Nested Blocks** — Boards can contain other boards, blocks can have children
 
 ## Tech Stack

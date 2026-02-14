@@ -7,7 +7,6 @@ import {
   getSnapshot,
   loadSnapshot,
   type Editor,
-  type TLEditorSnapshot,
 } from "@tldraw/tldraw";
 import "@tldraw/tldraw/tldraw.css";
 import { useTheme } from "next-themes";
@@ -22,7 +21,6 @@ import {
   saveTldrawSnapshot,
   saveHistorySnapshot,
 } from "@/lib/actions/tldraw";
-import { getCanvasPositions } from "@/lib/actions/canvas";
 import { createBlock } from "@/lib/actions/blocks";
 import { addBlockToBoard } from "@/lib/actions/boards";
 import { syncConnectedFields } from "@/lib/actions/connectors";
@@ -38,6 +36,7 @@ interface TldrawCanvasProps {
   boardId: string;
   blocks: Block[];
   positions: CanvasPosition[];
+  previewSnapshot?: Record<string, any> | null;
   onBlockClick?: (block: Block) => void;
   onBlocksChanged?: () => void;
 }
@@ -46,6 +45,7 @@ export function TldrawCanvas({
   boardId,
   blocks,
   positions,
+  previewSnapshot,
   onBlockClick,
   onBlocksChanged,
 }: TldrawCanvasProps) {
@@ -63,6 +63,7 @@ export function TldrawCanvas({
   const initializedRef = useRef(false);
 
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle");
+  const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Sync next-themes → tldraw dark mode ────────────────────
   useEffect(() => {
@@ -72,9 +73,46 @@ export function TldrawCanvas({
     editor.user.updateUserPreferences({ colorScheme: scheme });
   }, [resolvedTheme]);
 
+  // ── Preview snapshot: load history snapshot into editor ──────
+  const previewActiveRef = useRef(false);
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !initializedRef.current) return;
+    let cancelled = false;
+
+    if (previewSnapshot) {
+      // Pause autosave during preview
+      previewActiveRef.current = true;
+      try {
+        loadSnapshot(editor.store, previewSnapshot as any);
+        editor.zoomToFit({ animation: { duration: 300 } });
+      } catch (err) {
+        console.error("Failed to load preview snapshot:", err);
+      }
+    } else if (previewActiveRef.current) {
+      // Exiting preview — reload the current saved snapshot
+      previewActiveRef.current = false;
+      (async () => {
+        try {
+          const current = await getTldrawSnapshot(boardId);
+          if (cancelled) return; // component unmounted or effect re-ran
+          if (current?.snapshot && Object.keys(current.snapshot).length > 0) {
+            loadSnapshot(editor.store, current.snapshot as any);
+            editor.zoomToFit({ animation: { duration: 300 } });
+          }
+        } catch (err) {
+          if (!cancelled) console.error("Failed to restore current snapshot:", err);
+        }
+      })();
+    }
+
+    return () => { cancelled = true; };
+  }, [previewSnapshot, boardId]);
+
   // ── Autosave: persist snapshot ───────────────────────────────
   const debouncedSave = useCallback(
     (editor: Editor) => {
+      if (previewActiveRef.current) return; // Don't save during preview
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       setSaveStatus("saving");
       hasChangedSinceHistoryRef.current = true;
@@ -85,7 +123,8 @@ export function TldrawCanvas({
           await saveTldrawSnapshot(boardId, snapshot as any);
           setSaveStatus("saved");
           // Fade back to idle after 2s
-          setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2000);
+          if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+          fadeTimeoutRef.current = setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2000);
         } catch (err) {
           console.error("Autosave failed:", err);
           setSaveStatus("idle");
@@ -193,42 +232,6 @@ export function TldrawCanvas({
         onBlocksChanged?.();
       } catch (err) {
         console.error("File upload error:", err);
-      }
-    },
-    [boardId, onBlocksChanged]
-  );
-
-  // ── Create sticky note → create block → add shape ───────────
-  const handleCreateNote = useCallback(
-    async (editor: Editor, x: number, y: number) => {
-      try {
-        const block = await createBlock({
-          type: "prompt",
-          title: "New Note",
-          content: "",
-        });
-
-        await addBlockToBoard(boardId, block.id);
-
-        const pagePoint = editor.screenToPage({ x, y });
-        const id = createShapeId(`vault-${block.id}`);
-        editor.createShapes([
-          {
-            id,
-            type: "vault-block",
-            x: pagePoint.x,
-            y: pagePoint.y,
-            props: {
-              w: 200,
-              h: 160,
-              ...blockToShapeProps(block),
-            },
-          },
-        ]);
-
-        onBlocksChanged?.();
-      } catch (err) {
-        console.error("Create note error:", err);
       }
     },
     [boardId, onBlocksChanged]
@@ -431,6 +434,7 @@ export function TldrawCanvas({
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
       if (historyIntervalRef.current) clearInterval(historyIntervalRef.current);
 
       // Final save on unmount
@@ -490,7 +494,7 @@ export function TldrawCanvas({
   return (
     <div
       className="relative w-full rounded-lg overflow-hidden border border-[var(--border)]"
-      style={{ height: "calc(100vh - 180px)", minHeight: "500px" }}
+      style={{ height: "100%", minHeight: "300px" }}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
@@ -510,8 +514,8 @@ export function TldrawCanvas({
             : "opacity-100"
         } ${
           saveStatus === "saving"
-            ? "bg-yellow-500/20 text-yellow-400"
-            : "bg-green-500/20 text-green-400"
+            ? "bg-[var(--sticky-yellow)]/20 text-[var(--sticky-yellow)]"
+            : "bg-[var(--sticky-yellow)]/10 text-[var(--sticky-yellow)]/70"
         }`}
       >
         {saveStatus === "saving" ? "Saving..." : "Saved"}

@@ -23,6 +23,12 @@
   --input: #27272a;
   --ring: #d4d4d8;
   --radius: 0.5rem;
+  --sticky-yellow: #FFE066;
+  --sticky-yellow-dark: #E6C84D;
+  --sticky-yellow-bg: #2a2610;
+  --sticky-yellow-border: #4d4520;
+  --sticky-yellow-fg: #18181b;
+  --pin-active: #FFE066;
 }
 
 .light {
@@ -45,6 +51,12 @@
   --border: #e4e4e7;
   --input: #e4e4e7;
   --ring: #18181b;
+  --sticky-yellow: #FFD93D;
+  --sticky-yellow-dark: #E6C22E;
+  --sticky-yellow-bg: #FFF9DB;
+  --sticky-yellow-border: #FFE066;
+  --sticky-yellow-fg: #18181b;
+  --pin-active: #52525b;
 }
 
 * {
@@ -59,8 +71,8 @@ body {
 
 /* Moleskine dot grid background */
 .dot-grid {
-  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(circle, var(--dot-color) 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
 }
 
 :root {
@@ -111,9 +123,12 @@ body {
 }
 
 /* ── tldraw theme overrides ───────────────────────────────── */
-/* Dark mode (default) — override tldraw's own --tl-color-background */
+/* Dark mode (default) — override tldraw's own variables */
 :root .tl-container {
   --tl-color-background: var(--background) !important;
+  --tl-color-primary: #FFE066 !important;
+  --tl-color-selected: #FFE066 !important;
+  --tl-color-selected-contrast: #18181b !important;
   --color-text: var(--foreground);
   --color-low: var(--secondary);
   --color-panel: var(--card);
@@ -123,6 +138,9 @@ body {
 /* Light mode */
 .light .tl-container {
   --tl-color-background: var(--background) !important;
+  --tl-color-primary: #FFD93D !important;
+  --tl-color-selected: #FFD93D !important;
+  --tl-color-selected-contrast: #18181b !important;
   --color-text: var(--foreground);
   --color-low: var(--secondary);
   --color-panel: var(--card);
@@ -131,13 +149,13 @@ body {
 
 /* Moleskine dot grid on the tldraw canvas background */
 .tl-background {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px) !important;
-  background-size: 24px 24px !important;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0.8px, transparent 0.8px) !important;
+  background-size: 12px 12px !important;
 }
 
 .light .tl-background {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px) !important;
-  background-size: 24px 24px !important;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 0.8px, transparent 0.8px) !important;
+  background-size: 12px 12px !important;
 }
 
 /* tldraw custom shape CSS variables for block rendering */
@@ -147,8 +165,8 @@ body {
   --color-border: #27272a;
   --color-muted: #1c1c22;
   --color-muted-fg: #a1a1aa;
-  --color-note-bg: #1a1a0e;
-  --color-note-border: #3d3d1a;
+  --color-note-bg: #2a2610;
+  --color-note-border: #4d4520;
 }
 
 .light {
@@ -157,6 +175,11 @@ body {
   --color-border: #e4e4e7;
   --color-muted: #f4f4f5;
   --color-muted-fg: #71717a;
-  --color-note-bg: #fefce8;
-  --color-note-border: #fef08a;
+  --color-note-bg: #FFF9DB;
+  --color-note-border: #FFE066;
+}
+
+/* ── Hide tldraw license watermark ──────────────────────── */
+.tl-watermark_SEE-LICENSE {
+  display: none !important;
 }
