@@ -35,6 +35,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [boards, setBoards] = useState<Block[]>([]);
+  const [boardsLoading, setBoardsLoading] = useState(true);
+  const [boardsError, setBoardsError] = useState(false);
   const [boardsOpen, setBoardsOpen] = useState(true);
 
   // Drag reorder state
@@ -55,6 +57,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }, []);
 
   async function loadBoards() {
+    setBoardsLoading(true);
+    setBoardsError(false);
     try {
       const data = await getBoards();
       // Read board order once (not inside comparator)
@@ -74,6 +78,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       setBoards(sorted);
     } catch (err) {
       console.error("Failed to load boards:", err);
+      setBoardsError(true);
+    } finally {
+      setBoardsLoading(false);
     }
   }
 
@@ -248,7 +255,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
           {boardsOpen && (
             <div className="mt-1 space-y-0.5">
-              {boards.map((board, index) => (
+              {/* Board loading skeletons */}
+              {boardsLoading && (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 animate-pulse">
+                      <div className="h-3.5 w-3.5 rounded bg-[var(--muted)] flex-shrink-0" />
+                      <div className="h-3 rounded bg-[var(--muted)] flex-1" style={{ maxWidth: `${60 + i * 15}%` }} />
+                    </div>
+                  ))}
+                </>
+              )}
+              {!boardsLoading && boards.map((board, index) => (
                 <div
                   key={board.id}
                   draggable
@@ -291,7 +309,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   </Link>
                 </div>
               ))}
-              {boards.length === 0 && (
+              {!boardsLoading && boardsError && (
+                <button
+                  onClick={loadBoards}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                >
+                  <span className="opacity-50">Failed to load.</span>
+                  <span className="underline">Retry</span>
+                </button>
+              )}
+              {!boardsLoading && !boardsError && boards.length === 0 && (
                 <p className="px-3 py-1 text-xs text-[var(--muted-foreground)] opacity-50">
                   No boards yet
                 </p>
