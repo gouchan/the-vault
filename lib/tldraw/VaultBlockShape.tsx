@@ -362,7 +362,7 @@ export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
         )}
 
         {/* ─── Prompt / Note (sticky style) ─── */}
-        {blockType === "prompt" && (
+        {(blockType === "note" || blockType === "prompt") && (
           <div
             style={{
               padding: "12px",

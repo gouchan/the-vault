@@ -281,8 +281,8 @@ export default function BlockDetailPage() {
             <Button variant="outline" size="sm" onClick={() => setCreateType("person")} className="text-xs">
               <User className="mr-1 h-3 w-3" /> Person
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setCreateType("prompt")} className="text-xs">
-              <FileText className="mr-1 h-3 w-3" /> Prompt
+            <Button variant="outline" size="sm" onClick={() => setCreateType("note")} className="text-xs">
+              <FileText className="mr-1 h-3 w-3" /> Note
             </Button>
             <Button variant="ghost" size="sm" onClick={handleOpenAddExisting} className="text-xs">
               <Plus className="mr-1 h-3 w-3" /> Existing

@@ -71,7 +71,7 @@ export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
       data.url = form.url || null;
     }
 
-    if (type === "prompt") {
+    if (type === "note" || type === "prompt") {
       data.content = form.content || null;
     }
 
@@ -143,14 +143,14 @@ export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
         </div>
       )}
 
-      {/* Prompt fields */}
-      {type === "prompt" && (
+      {/* Note fields */}
+      {(type === "note" || type === "prompt") && (
         <div>
           <label className="text-xs font-medium text-[var(--muted-foreground)]">Content</label>
           <Textarea
             value={form.content}
             onChange={(e) => set("content", e.target.value)}
-            placeholder="Write your prompt or note..."
+            placeholder="Write your note..."
             rows={6}
             className="font-mono text-sm"
           />

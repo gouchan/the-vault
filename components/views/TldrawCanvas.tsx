@@ -253,6 +253,31 @@ export function TldrawCanvas({
         console.error("Failed to load snapshot:", err);
       }
 
+      // 1b. If snapshot was loaded, check if it contains vault-block shapes for our blocks.
+      //     If blocks exist but none have shapes in the snapshot, create them.
+      if (loaded && blocks.length > 0) {
+        const existingShapes = editor
+          .getCurrentPageShapes()
+          .filter((s) => s.type === "vault-block") as VaultBlockShape[];
+        const existingBlockIds = new Set(existingShapes.map((s) => s.props.blockId));
+
+        const missingBlocks = blocks.filter((b) => !existingBlockIds.has(b.id));
+        if (missingBlocks.length > 0) {
+          const shapesToCreate = missingBlocks.map((block, i) => ({
+            id: createShapeId(`vault-${block.id}`),
+            type: "vault-block" as const,
+            x: (i % 4) * 300 + 50,
+            y: Math.floor(i / 4) * 250 + 50,
+            props: {
+              w: block.type === "reference" ? 280 : 240,
+              h: block.type === "reference" && (block.thumbnail_url || block.og_image) ? 220 : 160,
+              ...blockToShapeProps(block),
+            },
+          }));
+          editor.createShapes(shapesToCreate);
+        }
+      }
+
       // 2. If no snapshot, migrate from canvas_positions (existing boards)
       if (!loaded && positions.length > 0) {
         const shapesToCreate: any[] = [];
@@ -304,6 +329,9 @@ export function TldrawCanvas({
       if (shapes.length > 0) {
         editor.zoomToFit({ animation: { duration: 300 } });
       }
+
+      // Seed knownBlockIdsRef so the sync effect knows what's already on the canvas
+      knownBlockIdsRef.current = new Set(blocks.map((b) => b.id));
 
       // Mark initialized after a short delay (to skip the initial load changes)
       setTimeout(() => {
@@ -369,17 +397,57 @@ export function TldrawCanvas({
   );
 
   // ── Sync blocks prop changes into tldraw ─────────────────────
+  // Track the block IDs we know about so we can detect actual additions/removals
+  const knownBlockIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor || !initializedRef.current) return;
+
+    const prevKnown = knownBlockIdsRef.current;
+    const newBlockIds = new Set(blocks.map((b) => b.id));
+
+    // On first run after init, record what we have and add any missing shapes
+    // (don't delete anything on first run)
+    if (prevKnown.size === 0) {
+      knownBlockIdsRef.current = newBlockIds;
+
+      // Still create shapes for blocks that aren't on the canvas yet
+      const existingShapes = editor
+        .getCurrentPageShapes()
+        .filter((s) => s.type === "vault-block") as VaultBlockShape[];
+      const existingBlockIds = new Set(existingShapes.map((s) => s.props.blockId));
+
+      const missingShapes: any[] = [];
+      blocks.forEach((block) => {
+        if (!existingBlockIds.has(block.id)) {
+          const viewportCenter = editor.getViewportScreenCenter();
+          const pageCenter = editor.screenToPage(viewportCenter);
+          missingShapes.push({
+            id: createShapeId(`vault-${block.id}`),
+            type: "vault-block",
+            x: pageCenter.x + (Math.random() - 0.5) * 200,
+            y: pageCenter.y + (Math.random() - 0.5) * 200,
+            props: {
+              w: block.type === "reference" ? 280 : 240,
+              h: block.type === "reference" && (block.thumbnail_url || block.og_image) ? 220 : 160,
+              ...blockToShapeProps(block),
+            },
+          });
+        }
+      });
+      if (missingShapes.length > 0) {
+        editor.createShapes(missingShapes);
+      }
+      return;
+    }
 
     const existingShapes = editor
       .getCurrentPageShapes()
       .filter((s) => s.type === "vault-block") as VaultBlockShape[];
     const existingBlockIds = new Set(existingShapes.map((s) => s.props.blockId));
-    const newBlockIds = new Set(blocks.map((b) => b.id));
 
-    // Add new blocks
+    // Add new blocks (blocks in new set that weren't in previous known set)
     const shapesToCreate: any[] = [];
     blocks.forEach((block) => {
       if (!existingBlockIds.has(block.id)) {
@@ -421,13 +489,17 @@ export function TldrawCanvas({
       }
     });
 
-    // Remove shapes for blocks that were removed from the board
+    // Remove shapes only for blocks that were previously known but are now gone
+    // (i.e., actually removed from the board — not just missing from initial load)
     const shapesToRemove = existingShapes
-      .filter((s) => !newBlockIds.has(s.props.blockId))
+      .filter((s) => prevKnown.has(s.props.blockId) && !newBlockIds.has(s.props.blockId))
       .map((s) => s.id);
     if (shapesToRemove.length > 0) {
       editor.deleteShapes(shapesToRemove);
     }
+
+    // Update known set
+    knownBlockIdsRef.current = newBlockIds;
   }, [blocks]);
 
   // ── Cleanup ──────────────────────────────────────────────────

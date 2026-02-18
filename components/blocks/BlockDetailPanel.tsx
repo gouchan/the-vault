@@ -129,7 +129,7 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
         </a>
       )}
 
-      {/* Content (prompts) */}
+      {/* Content (notes) */}
       {block.content && (
         <div className="mt-4 rounded bg-[var(--secondary)] p-3">
           <pre className="whitespace-pre-wrap text-sm font-mono">{block.content}</pre>

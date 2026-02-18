@@ -1,7 +1,7 @@
 "use server";
 
 import { createServerClient } from "@/lib/supabase/server";
-import type { Block, BlockType, CreatePersonInput, CreateReferenceInput, CreatePromptInput } from "@/types/block";
+import type { Block, BlockType, CreatePersonInput, CreateReferenceInput, CreateNoteInput } from "@/types/block";
 
 export async function getBlocks(options?: {
   type?: BlockType;

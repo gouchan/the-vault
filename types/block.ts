@@ -1,4 +1,4 @@
-export type BlockType = "person" | "reference" | "prompt" | "board";
+export type BlockType = "person" | "reference" | "note" | "prompt" | "board";
 export type MediaType = "image" | "video" | "youtube" | "vimeo" | "url" | "tweet" | "screenshot";
 
 export interface Block {
@@ -25,7 +25,7 @@ export interface Block {
   og_description: string | null;
   og_image: string | null;
 
-  // Prompt
+  // Note
   content: string | null;
 
   // Meta
@@ -97,7 +97,7 @@ export interface CreateReferenceInput {
   tags?: string[];
 }
 
-export interface CreatePromptInput {
+export interface CreateNoteInput {
   title: string;
   content: string;
   description?: string;

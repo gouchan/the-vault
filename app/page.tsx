@@ -18,7 +18,7 @@ const typeFilters: { type: BlockType | null; label: string; icon: React.ElementT
   { type: null, label: "All", icon: Filter },
   { type: "person", label: "People", icon: User },
   { type: "reference", label: "References", icon: Link2 },
-  { type: "prompt", label: "Prompts", icon: FileText },
+  { type: "note", label: "Notes", icon: FileText },
   { type: "board", label: "Boards", icon: LayoutGrid },
 ];
 
@@ -119,7 +119,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-1">
-          {(["person", "reference", "prompt", "board"] as BlockType[]).map((type) => (
+          {(["person", "reference", "note", "board"] as BlockType[]).map((type) => (
             <Button
               key={type}
               variant="outline"

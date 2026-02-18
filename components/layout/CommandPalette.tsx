@@ -56,7 +56,7 @@ export function CommandPalette({ onCreated }: { onCreated?: () => void }) {
     setResults([]);
   }, []);
 
-  async function handleCreateBlock(type: "person" | "reference" | "prompt" | "board") {
+  async function handleCreateBlock(type: "person" | "reference" | "note" | "board") {
     close();
     // Navigate to home and open create dialog (we'll use a simpler approach)
     const title = prompt(`New ${type} name:`);
@@ -103,7 +103,7 @@ export function CommandPalette({ onCreated }: { onCreated?: () => void }) {
                   >
                     {block.type === "person" && <User className="h-4 w-4 text-[var(--muted-foreground)]" />}
                     {block.type === "reference" && <Link2 className="h-4 w-4 text-[var(--muted-foreground)]" />}
-                    {block.type === "prompt" && <FileText className="h-4 w-4 text-[var(--muted-foreground)]" />}
+                    {(block.type === "note" || block.type === "prompt") && <FileText className="h-4 w-4 text-[var(--muted-foreground)]" />}
                     {block.type === "board" && <LayoutGrid className="h-4 w-4 text-[var(--muted-foreground)]" />}
                     <span className="truncate">{block.title || "Untitled"}</span>
                     <span className="ml-auto text-xs text-[var(--muted-foreground)] capitalize">{block.type}</span>
@@ -129,11 +129,11 @@ export function CommandPalette({ onCreated }: { onCreated?: () => void }) {
                 New Reference
               </Command.Item>
               <Command.Item
-                onSelect={() => handleCreateBlock("prompt")}
+                onSelect={() => handleCreateBlock("note")}
                 className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-[var(--accent)] data-[selected]:bg-[var(--accent)]"
               >
                 <Plus className="h-4 w-4 text-[var(--muted-foreground)]" />
-                New Prompt
+                New Note
               </Command.Item>
               <Command.Item
                 onSelect={() => handleCreateBlock("board")}

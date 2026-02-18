@@ -42,9 +42,9 @@ export function QuickCapture({ onCreated }: { onCreated?: () => void }) {
           thumbnail_url: ogData.image || null,
         });
       } else {
-        // Treat as a prompt/note
+        // Treat as a note
         await createBlock({
-          type: "prompt",
+          type: "note",
           title: trimmed.slice(0, 80),
           content: trimmed,
         });

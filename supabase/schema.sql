@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Blocks table - universal content unit
 CREATE TABLE blocks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  type TEXT NOT NULL CHECK (type IN ('person', 'reference', 'prompt', 'board')),
+  type TEXT NOT NULL CHECK (type IN ('person', 'reference', 'note', 'prompt', 'board')),
 
   -- Common fields
   title TEXT,

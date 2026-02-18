@@ -12,6 +12,7 @@ export function BlockCard({ block, onClick }: { block: Block; onClick?: () => vo
       return <PersonCard block={block} onClick={onClick} />;
     case "reference":
       return <ReferenceCard block={block} onClick={onClick} />;
+    case "note":
     case "prompt":
       return <PromptCard block={block} onClick={onClick} />;
     case "board":

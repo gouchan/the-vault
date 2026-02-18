@@ -211,8 +211,8 @@ export default function BoardPage() {
             <Button variant="outline" size="sm" onClick={() => handleCreateAndAdd("reference")} className="text-xs">
               <Link2 className="mr-1 h-3 w-3" /> New Reference
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleCreateAndAdd("prompt")} className="text-xs">
-              <FileText className="mr-1 h-3 w-3" /> New Prompt
+            <Button variant="outline" size="sm" onClick={() => handleCreateAndAdd("note")} className="text-xs">
+              <FileText className="mr-1 h-3 w-3" /> New Note
             </Button>
           </div>
 

@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ── Blocks: universal content unit ─────────────────────────
 CREATE TABLE IF NOT EXISTS blocks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  type TEXT NOT NULL CHECK (type IN ('person', 'reference', 'prompt', 'board')),
+  type TEXT NOT NULL CHECK (type IN ('person', 'reference', 'note', 'prompt', 'board')),
 
   -- Common
   title TEXT,
@@ -133,12 +133,16 @@ CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
 
 -- ── Triggers ───────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER blocks_updated_at
   BEFORE UPDATE ON blocks
@@ -148,15 +152,25 @@ CREATE TRIGGER canvas_updated_at
   BEFORE UPDATE ON canvas_positions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ── Disable RLS (single-user app) ─────────────────────────
-ALTER TABLE blocks DISABLE ROW LEVEL SECURITY;
-ALTER TABLE tags DISABLE ROW LEVEL SECURITY;
-ALTER TABLE block_tags DISABLE ROW LEVEL SECURITY;
-ALTER TABLE block_connections DISABLE ROW LEVEL SECURITY;
-ALTER TABLE canvas_positions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE canvas_connectors DISABLE ROW LEVEL SECURITY;
-ALTER TABLE canvas_snapshots DISABLE ROW LEVEL SECURITY;
-ALTER TABLE canvas_history DISABLE ROW LEVEL SECURITY;
+-- ── Enable RLS ───────────────────────────────────────────────
+-- Anon role: read-only. Writes use service_role key (bypasses RLS).
+ALTER TABLE blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE block_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE block_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE canvas_positions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE canvas_connectors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE canvas_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE canvas_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "anon_read" ON blocks FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON tags FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON block_tags FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON block_connections FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON canvas_positions FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON canvas_connectors FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON canvas_snapshots FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_read" ON canvas_history FOR SELECT TO anon USING (true);
 
 -- ── Storage bucket for images ──────────────────────────────
 -- Run this separately if the bucket doesn't exist:
