@@ -15,9 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import type { Block, BlockType, CanvasPosition } from "@/types/block";
 import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock } from "lucide-react";
 
-// Dynamic import — Excalidraw must not be SSR'd
-const ExcalidrawCanvas = dynamic(
-  () => import("@/components/views/ExcalidrawCanvas").then((m) => m.ExcalidrawCanvas),
+// Dynamic import — tldraw must not be SSR'd
+const TldrawCanvas = dynamic(
+  () => import("@/components/views/TldrawCanvas").then((m) => m.TldrawCanvas),
   { ssr: false, loading: () => (
     <div className="flex items-center justify-center border border-[var(--border)] rounded-lg h-full" style={{ minHeight: "300px" }}>
       <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--muted-foreground)] border-t-transparent" />
@@ -169,7 +169,7 @@ export default function BoardPage() {
       ) : (
         <div className="flex-1 flex flex-col min-h-0 px-4 pb-2">
           <div className="min-h-0" style={{ flex: "1 1 0%" }}>
-            <ExcalidrawCanvas
+            <TldrawCanvas
               boardId={boardId}
               blocks={board.children || []}
               positions={canvasPositions}
@@ -182,7 +182,7 @@ export default function BoardPage() {
             />
           </div>
 
-          {/* History Timeline — sits below the canvas */}
+          {/* History Timeline — sits below the canvas, never overlapped by tldraw toolbar */}
           {showHistory && (
             <HistoryTimeline
               boardId={boardId}

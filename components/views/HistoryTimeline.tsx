@@ -11,16 +11,9 @@ interface HistoryTimelineProps {
   onRestoreSnapshot?: (snapshot: Record<string, any>) => void;
 }
 
-// Extract element count from an Excalidraw snapshot
+// Extract shape count from a tldraw snapshot
 function getSnapshotShapeCount(snapshot: Record<string, any>): number {
   try {
-    // Excalidraw format: { elements: [...], appState: {...} }
-    if (Array.isArray(snapshot?.elements)) {
-      return snapshot.elements.filter(
-        (el: any) => el.customData?.vaultBlockId && !el.isDeleted
-      ).length;
-    }
-    // Legacy tldraw format fallback
     const store = snapshot?.store || snapshot?.document?.store || {};
     return Object.keys(store).filter((k) => k.startsWith("shape:")).length;
   } catch {
