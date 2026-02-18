@@ -96,7 +96,7 @@ export default function BoardPage() {
   if (!board) {
     return (
       <div className="flex items-center justify-center h-full text-[var(--muted-foreground)]">
-        Board not found
+        Garland not found
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default function BoardPage() {
       {/* Header */}
       <div className={`flex items-start justify-between ${view === "canvas" ? "px-4 py-3" : "mb-6"}`}>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold truncate">{board.title || "Untitled Board"}</h1>
+          <h1 className="text-xl font-bold truncate">{board.title || "Untitled Garland"}</h1>
           {board.description && view !== "canvas" && (
             <p className="mt-1 text-sm text-[var(--muted-foreground)]">{board.description}</p>
           )}
@@ -201,7 +201,7 @@ export default function BoardPage() {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent onClose={() => setAddDialogOpen(false)} className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Block to Board</DialogTitle>
+            <DialogTitle>Add Bead to Garland</DialogTitle>
           </DialogHeader>
 
           <div className="flex gap-2 mt-2">
@@ -219,11 +219,11 @@ export default function BoardPage() {
           <div className="max-h-80 overflow-y-auto space-y-2 mt-3">
             {allBlocks.length === 0 ? (
               <p className="text-sm text-[var(--muted-foreground)] text-center py-6">
-                No existing blocks to add. Use the buttons above to create one.
+                No existing beads to add. Use the buttons above to create one.
               </p>
             ) : (
               <>
-                <p className="text-xs text-[var(--muted-foreground)] px-1">Or add an existing block:</p>
+                <p className="text-xs text-[var(--muted-foreground)] px-1">Or add an existing bead:</p>
                 {allBlocks.map((block) => (
                   <button
                     key={block.id}
@@ -246,7 +246,7 @@ export default function BoardPage() {
       <Dialog open={!!createType} onOpenChange={() => setCreateType(null)}>
         <DialogContent onClose={() => setCreateType(null)}>
           <DialogHeader>
-            <DialogTitle className="capitalize">New {createType}</DialogTitle>
+            <DialogTitle>New {createType ? createType.charAt(0).toUpperCase() + createType.slice(1) : ""}</DialogTitle>
           </DialogHeader>
           {createType && (
             <BlockForm

@@ -11,14 +11,16 @@ import {
   Home,
   ChevronDown,
   ChevronRight,
-  Vault,
+  CircleDot,
   Sun,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   GripVertical,
   Pin,
+  HelpCircle,
 } from "lucide-react";
+import { HelpModal } from "./HelpModal";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { getBoards } from "@/lib/actions/boards";
@@ -38,6 +40,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [boardsLoading, setBoardsLoading] = useState(true);
   const [boardsError, setBoardsError] = useState(false);
   const [boardsOpen, setBoardsOpen] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Drag reorder state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -97,7 +100,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }
 
   async function handleCreateBoard() {
-    const title = prompt("Board name:");
+    const title = prompt("Garland name:");
     if (!title) return;
     await createBlock({ type: "board", title });
     loadBoards();
@@ -177,13 +180,21 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <button
             onClick={handleCreateBoard}
             className="flex items-center justify-center p-2 rounded-md transition-colors text-[var(--muted-foreground)] hover:bg-[var(--sticky-yellow)]/10 hover:text-[var(--sticky-yellow)]"
-            title="Add Board"
+            title="Add Garland"
           >
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
         <div className="flex-1" />
+
+        <button
+          onClick={() => setHelpOpen(true)}
+          className="p-1.5 rounded-md hover:bg-[var(--accent)] text-[var(--muted-foreground)] transition-colors"
+          title="Help & shortcuts"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </button>
 
         {mounted && (
           <button
@@ -194,6 +205,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </button>
         )}
+
+        {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
       </aside>
     );
   }
@@ -204,8 +217,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo + collapse */}
       <div className="flex h-14 items-center justify-between border-b border-[var(--border)] px-4">
         <div className="flex items-center gap-2">
-          <Vault className="h-5 w-5" />
-          <span className="text-sm font-bold tracking-tight">THE VAULT</span>
+          <CircleDot className="h-5 w-5" />
+          <span className="text-sm font-bold tracking-tight">ROSARY</span>
         </div>
         <button
           onClick={onToggle}
@@ -239,7 +252,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--muted-foreground)] transition-colors hover:bg-[var(--sticky-yellow)]/10 hover:text-[var(--sticky-yellow)]"
           >
             <Plus className="h-4 w-4" />
-            Add Board
+            New Garland
           </button>
         </div>
 
@@ -249,7 +262,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             onClick={() => setBoardsOpen(!boardsOpen)}
             className="flex w-full cursor-pointer items-center justify-between px-3 py-1 text-xs font-medium uppercase tracking-wider text-[var(--muted-foreground)]"
           >
-            <span>Boards</span>
+            <span>Garlands</span>
             {boardsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </div>
 
@@ -291,7 +304,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   >
                     {/* Drag handle */}
                     <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-40 cursor-grab flex-shrink-0 transition-opacity" />
-                    <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" />
+                    <CircleDot className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="truncate flex-1">{board.title || "Untitled"}</span>
                     {/* Single pin button — yellow when pinned, grey on hover when unpinned */}
                     <button
@@ -302,7 +315,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                           ? "opacity-100 text-[var(--pin-active)]"
                           : "opacity-0 group-hover:opacity-60 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                       )}
-                      title={board.pinned ? "Unpin" : "Pin to top"}
+                      title={board.pinned ? "Unpin garland" : "Pin garland to top"}
                     >
                       <Pin className="h-3 w-3" />
                     </button>
@@ -320,7 +333,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               )}
               {!boardsLoading && !boardsError && boards.length === 0 && (
                 <p className="px-3 py-1 text-xs text-[var(--muted-foreground)] opacity-50">
-                  No boards yet
+                  No garlands yet
                 </p>
               )}
             </div>
@@ -358,7 +371,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <Search className="mr-2 h-3 w-3" />
           Search... <kbd className="ml-auto text-[10px] opacity-50">⌘K</kbd>
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-xs text-[var(--muted-foreground)]"
+          onClick={() => setHelpOpen(true)}
+        >
+          <HelpCircle className="mr-2 h-3 w-3" />
+          Help &amp; shortcuts <kbd className="ml-auto text-[10px] opacity-50">?</kbd>
+        </Button>
       </div>
+
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </aside>
   );
 }

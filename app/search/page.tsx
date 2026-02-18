@@ -65,7 +65,7 @@ export default function SearchPage() {
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--muted-foreground)]">
           <Search className="h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Start typing to search across all your blocks</p>
+          <p className="text-sm">Start typing to search across all your beads</p>
         </div>
       )}
 

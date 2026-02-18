@@ -26,7 +26,7 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
   }, [block.id]);
 
   async function handleDelete() {
-    if (!confirm("Delete this block?")) return;
+    if (!confirm("Delete this bead?")) return;
     await deleteBlock(block.id);
     onUpdated?.();
     onClose();
@@ -41,7 +41,7 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
     return (
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-[var(--border)] bg-[var(--background)] p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Edit Block</h2>
+          <h2 className="text-lg font-semibold">Edit Bead</h2>
           <Button variant="ghost" size="icon" onClick={() => setEditing(false)}>
             <X className="h-4 w-4" />
           </Button>
@@ -202,7 +202,7 @@ export function BlockDetailPanel({ block, onClose, onUpdated }: BlockDetailPanel
             <Layers className="h-4 w-4 text-[var(--muted-foreground)]" />
             <span className="text-sm">
               {childrenCount > 0
-                ? `${childrenCount} sub-${childrenCount === 1 ? "block" : "blocks"}`
+                ? `${childrenCount} sub-${childrenCount === 1 ? "bead" : "beads"}`
                 : "View full page"}
             </span>
           </div>

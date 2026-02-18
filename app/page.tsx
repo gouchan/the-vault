@@ -10,16 +10,15 @@ import { BlockForm } from "@/components/forms/BlockForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType } from "@/types/block";
-import { User, Link2, FileText, LayoutGrid, Filter, Loader2 } from "lucide-react";
+import { User, Link2, FileText, Filter, Loader2 } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
 const typeFilters: { type: BlockType | null; label: string; icon: React.ElementType }[] = [
-  { type: null, label: "All", icon: Filter },
+  { type: null, label: "All Beads", icon: Filter },
   { type: "person", label: "People", icon: User },
   { type: "reference", label: "References", icon: Link2 },
   { type: "note", label: "Notes", icon: FileText },
-  { type: "board", label: "Boards", icon: LayoutGrid },
 ];
 
 export default function HomePage() {
@@ -90,9 +89,9 @@ export default function HomePage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">The Vault</h1>
+        <h1 className="text-2xl font-bold">Rosary</h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Your creative intelligence hub
+          String ideas together
         </p>
       </div>
 
@@ -119,15 +118,15 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-1">
-          {(["person", "reference", "note", "board"] as BlockType[]).map((type) => (
+          {(["person", "reference", "note"] as BlockType[]).map((type) => (
             <Button
               key={type}
               variant="outline"
               size="sm"
               onClick={() => setCreateType(type)}
-              className="text-xs capitalize"
+              className="text-xs"
             >
-              + {type}
+              + {type.charAt(0).toUpperCase() + type.slice(1)}
             </Button>
           ))}
         </div>
@@ -201,7 +200,7 @@ export default function HomePage() {
       <Dialog open={!!createType} onOpenChange={() => setCreateType(null)}>
         <DialogContent onClose={() => setCreateType(null)}>
           <DialogHeader>
-            <DialogTitle className="capitalize">New {createType}</DialogTitle>
+            <DialogTitle>New {createType ? createType.charAt(0).toUpperCase() + createType.slice(1) : ""}</DialogTitle>
           </DialogHeader>
           {createType && (
             <BlockForm

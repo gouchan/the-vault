@@ -1,23 +1,30 @@
-# The Vault
+# Rosary
 
-A personal creative curation tool — Notion meets Miro meets Are.na. Collect references, people, prompts, and images on infinite canvas moodboards with freehand drawing.
+A personal creative curation tool — Notion meets Miro meets Are.na. Collect references, people, notes, and images on infinite canvas moodboards with freehand drawing. String ideas together.
 
 Built with Next.js 16, Supabase, tldraw, and Tailwind CSS.
 
+## Concepts
+
+- **Beads** — individual content units: People, References, Notes
+- **Garlands** — infinite canvas boards that hold and arrange beads spatially
+- **Connectors** — arrows between beads that sync shared fields
+
 ## Features
 
-- **Blocks** — Four types: People, References, Prompts, Boards. Each is a universal content unit with tags, notes, and metadata
-- **Infinite Canvas** — tldraw-powered moodboards with pan, zoom, freehand drawing, shapes, and arrows
+- **Beads** — Three types: People, References, Notes. Each is a universal content unit with tags, notes, and metadata
+- **Infinite Canvas** — tldraw-powered garlands with pan, zoom, freehand drawing, shapes, and arrows
 - **Image Upload** — Drag-and-drop, paste, or file-pick images directly onto the canvas
-- **Connectors** — Draw arrows between blocks to sync shared fields (tags, URLs, descriptions)
+- **Connectors** — Draw arrows between beads to sync shared fields (tags, URLs, descriptions)
 - **Auto-save** — Canvas state persists automatically with visual save indicator
-- **History Timeline** — Horizontal dot timeline to scrub through board evolution, preview and restore past states
+- **History Timeline** — Horizontal dot timeline to scrub through garland evolution, preview and restore past states
 - **OG Metadata** — Paste a URL and it auto-fetches title, description, and preview image
-- **Full-text Search** — Postgres-powered search across all blocks
+- **Full-text Search** — Postgres-powered search across all beads
 - **Command Palette** — `Cmd+K` to search, create, and navigate
 - **Light/Dark Mode** — Toggle between themes with Moleskine dot-grid background
-- **Collapsible Sidebar** — Expandable nav with drag-reorder boards, pin favorites to top
-- **Nested Blocks** — Boards can contain other boards, blocks can have children
+- **Collapsible Sidebar** — Expandable nav with drag-reorder garlands, pin favorites to top
+- **Nested Beads** — Garlands can contain other garlands, beads can have children
+- **Help Modal** — Built-in keyboard shortcut reference (`?` or help button in sidebar)
 
 ## Tech Stack
 
@@ -26,7 +33,7 @@ Built with Next.js 16, Supabase, tldraw, and Tailwind CSS.
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Database | Supabase (Postgres) |
 | Storage | Supabase Storage |
-| Canvas | tldraw v4.3.1 |
+| Canvas | tldraw v4.3.2 |
 | Styling | Tailwind CSS v4 |
 | UI | Radix primitives, Lucide icons, Framer Motion |
 | Theme | next-themes |
@@ -42,7 +49,7 @@ Built with Next.js 16, Supabase, tldraw, and Tailwind CSS.
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/gouchan/the-vault.git
+git clone https://github.com/gouchan/rosary.git
 cd the-vault
 npm install
 ```
@@ -122,24 +129,24 @@ the-vault/
 
 ## Architecture
 
-### Block System
+### Bead System
 
-Everything is a **block**. The `blocks` table uses a type discriminator:
+Everything is a **bead** (internally: `block`). The `blocks` table uses a type discriminator:
 
 | Type | Purpose | Key Fields |
 |------|---------|-----------|
 | `person` | People/contacts | role, avatar_url, social links |
 | `reference` | Links/images/media | url, media_type, OG metadata |
-| `prompt` | Notes/text | content |
-| `board` | Moodboard container | children via block_connections |
+| `note` | Notes/text | content |
+| `board` | Garland (canvas container) | children via block_connections |
 
-Blocks connect to each other through `block_connections` (parent/child relationships). Any block can be nested inside any other block.
+Beads connect to each other through `block_connections` (parent/child relationships). Any bead can be nested inside any garland.
 
 ### Canvas System
 
-Each board has an infinite tldraw canvas. The canvas state (all shapes, drawings, arrows) is stored as a single JSONB snapshot in `canvas_snapshots`. History snapshots are captured every 60 seconds of active editing into `canvas_history`.
+Each garland has an infinite tldraw canvas. The canvas state (all shapes, drawings, arrows) is stored as a single JSONB snapshot in `canvas_snapshots`. History snapshots are captured every 60 seconds of active editing into `canvas_history`.
 
-Custom `vault-block` shapes render block data (images, people cards, notes) directly inside tldraw. tldraw's native arrow tool doubles as a connector — drawing an arrow between two blocks triggers field syncing.
+Custom `vault-block` shapes render bead data (images, people cards, notes) directly inside tldraw. tldraw's native arrow tool doubles as a connector — drawing an arrow between two beads triggers field syncing.
 
 ### Data Flow
 
@@ -174,6 +181,10 @@ All data operations use Next.js Server Actions with `"use server"`. No custom AP
 - **No authentication** — Add Supabase Auth if needed for multi-user
 - **Image uploads** — Validated server-side (image types only, 10MB max)
 - **Environment variables** — All secrets in `.env.local`, never committed
+
+## Canvas License
+
+The infinite canvas uses [tldraw](https://tldraw.dev) under their SDK license. The "Made with tldraw" watermark is displayed on the canvas as required. A free hobby license key is needed for production deployments — apply at [tldraw.dev/get-a-license/hobby](https://tldraw.dev/get-a-license/hobby).
 
 ## License
 

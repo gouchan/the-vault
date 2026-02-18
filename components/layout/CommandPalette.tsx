@@ -106,7 +106,7 @@ export function CommandPalette({ onCreated }: { onCreated?: () => void }) {
                     {(block.type === "note" || block.type === "prompt") && <FileText className="h-4 w-4 text-[var(--muted-foreground)]" />}
                     {block.type === "board" && <LayoutGrid className="h-4 w-4 text-[var(--muted-foreground)]" />}
                     <span className="truncate">{block.title || "Untitled"}</span>
-                    <span className="ml-auto text-xs text-[var(--muted-foreground)] capitalize">{block.type}</span>
+                    <span className="ml-auto text-xs text-[var(--muted-foreground)] capitalize">{block.type === "board" ? "garland" : block.type}</span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -140,7 +140,7 @@ export function CommandPalette({ onCreated }: { onCreated?: () => void }) {
                 className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-[var(--accent)] data-[selected]:bg-[var(--accent)]"
               >
                 <Plus className="h-4 w-4 text-[var(--muted-foreground)]" />
-                New Board
+                New Garland
               </Command.Item>
             </Command.Group>
 

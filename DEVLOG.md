@@ -109,7 +109,7 @@ Development history of The Vault, built in collaboration with Claude Code over a
 - **Horizontal dot timeline** — redesigned history from vertical list to a horizontal dot-based scrub bar with hover tooltips
 - **Tighter Moleskine dot grid** — doubled density to 12px spacing with 0.8px dots for an authentic notebook feel
 - **Theme-aware pin icon** — yellow in dark mode, dark grey in light mode for proper contrast
-- **tldraw watermark hidden** — CSS override for `.tl-watermark_SEE-LICENSE`
+- **tldraw watermark** — initially hidden via CSS, later restored to comply with tldraw license terms
 
 ### Layout fixes:
 - **Toolbar overlap** — replaced fixed-height canvas (`calc(100vh - 180px)`) with flex layout where canvas takes remaining space and history panel sits below as `flex-shrink-0`
@@ -132,6 +132,65 @@ Development history of The Vault, built in collaboration with Claude Code over a
 
 ---
 
+## Phase 4 — Excalidraw Detour & tldraw Return
+
+**Goal:** Replace tldraw with Excalidraw (MIT-licensed) to avoid the 5-second canvas disappearance on production deployments without a license key. Then revert when Excalidraw proved worse.
+
+### What happened:
+- Attempted full migration from tldraw to Excalidraw
+- Built `ExcalidrawCanvas.tsx` with all features: autosave, history, block sync, double-click nav, drag-drop upload, arrow connectors
+- Created `blockElements.ts` helper for converting blocks to Excalidraw element skeletons
+- Hit multiple blockers:
+  - **Images never rendered** — Excalidraw's image element system requires `BinaryFileData` with base64 `dataURL`, `FileId` branding, and registration via `addFiles()`. Despite multiple approaches (initialData.files, post-init addFiles, two-phase loading), images only showed placeholder icons
+  - **1MB body size limit** — Saving base64 image data in canvas snapshots exceeded Next.js Server Action limits
+  - **Overall worse UX** — Excalidraw's hand-drawn style didn't match the app's aesthetic, and the element creation API was brittle compared to tldraw's shape system
+
+### Decision:
+Reverted entirely to tldraw. The canvas disappearance is a licensing issue, not a technical one — solvable with a free hobby license key from tldraw.dev. Excalidraw's MIT license wasn't worth the degraded experience.
+
+### Changes:
+- Restored `TldrawCanvas.tsx`, `VaultBlockShape.tsx`, `HistoryTimeline.tsx` from pre-migration commit
+- Deleted all Excalidraw files (`ExcalidrawCanvas.tsx`, `lib/excalidraw/`)
+- Swapped `@excalidraw/excalidraw` back to `@tldraw/tldraw`
+- **Removed CSS watermark override** — tldraw watermark now visible per license terms
+- Cleared Excalidraw-format snapshots from database
+
+### Lesson learned:
+Don't migrate away from a good tool because of a licensing issue that has a free solution. Apply for the hobby license instead.
+
+---
+
+## Phase 5 — Rebrand: Rosary
+
+**Goal:** Give the app a distinct identity. The Vault was a placeholder name. Rosary ties into the bead metaphor — collecting and stringing together ideas.
+
+### Naming system:
+- **App**: The Vault → **Rosary**
+- **Boards** → **Garlands** (a string of beads/ideas arranged spatially)
+- **Blocks** → **Beads** (the individual units you collect and string)
+- **Connectors** stay as connectors (arrows between beads)
+
+### What was built:
+- **Full rename** across all components, pages, server actions, and copy
+- **HelpModal** — keyboard shortcuts guide and concepts explainer, anchored bottom-left of sidebar. Covers: Concepts (Beads/Garlands/Connectors), App shortcuts, Canvas navigation, Canvas tools, Canvas edit, Canvas arrange
+- **Help button** added to both collapsed (icon) and expanded (labeled) sidebar states
+- **Geist Sans font** — installed `geist` npm package, applied via CSS variable globally. Experimented with GeistPixelSquare (headlines) and GeistMono (everything) before settling on Geist Sans for its clean, modern feel
+- **CircleDot icon** — replaced Vault and LayoutGrid icons throughout sidebar with CircleDot, on-brand with the rosary bead motif
+- **Filter cleanup** — removed Garlands from the home page filter tabs (garlands are a navigation construct, not a filterable bead type). "All" → "All Beads" for brand consistency
+- **Create button cleanup** — removed the "+ Garland" create button from home page; garlands are only created via the sidebar "New Garland" button to avoid confusion (creating from home page was creating bead-like items, not proper canvas boards)
+
+### Key decisions:
+- **Garlands as navigation, not content** — boards/garlands are canvas workspaces, not bead types. Keeping them in the filter was confusing because "creating a garland" from the home page produced an item that didn't behave like a canvas. Removed entirely from that context.
+- **CircleDot as brand icon** — simple, geometric, and directly evokes a rosary bead. Consistent across the wordmark, garland list items, and favicon (future).
+- **Geist Sans over Geist Mono** — tried Mono for the full-terminal aesthetic, user preferred the cleaner feel of Sans. Kept tracking-tight on the sidebar ROSARY wordmark for density.
+- **HelpModal placement** — anchored bottom-left (aligned with the sidebar footer) rather than centered, so it feels like part of the nav chrome rather than a modal interruption.
+
+### Bugs avoided:
+- Confirmed "board" type in the blocks table remains `"board"` internally — only the display/label language changed. No DB migration needed.
+- Removed unused `LayoutGrid` import from page.tsx after filter cleanup to keep the bundle clean.
+
+---
+
 ## Architecture Snapshot
 
 ```
@@ -144,7 +203,7 @@ Development history of The Vault, built in collaboration with Claude Code over a
 ### Stack:
 - Next.js 16.1.6 (App Router, Turbopack, Server Actions)
 - Supabase (Postgres + Storage)
-- tldraw 4.3.1 (infinite canvas, custom shapes)
+- tldraw 4.3.2 (infinite canvas, custom shapes)
 - Tailwind CSS 4 (utility-first styling)
 - next-themes (light/dark with class strategy)
 - cmdk (command palette)
