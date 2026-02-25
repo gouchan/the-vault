@@ -1,6 +1,6 @@
 # Dev Log
 
-Development history of The Vault, built in collaboration with Claude Code over a series of sessions.
+Development history of Rosary (formerly The Vault), built in collaboration with Claude Code over a series of sessions.
 
 ---
 
@@ -188,6 +188,50 @@ Don't migrate away from a good tool because of a licensing issue that has a free
 ### Bugs avoided:
 - Confirmed "board" type in the blocks table remains `"board"` internally — only the display/label language changed. No DB migration needed.
 - Removed unused `LayoutGrid` import from page.tsx after filter cleanup to keep the bundle clean.
+
+---
+
+## Phase 6 — UX Polish + License Activation
+
+**Goal:** Soften the visual theme, surface hidden features (image upload, connectors), and activate the tldraw hobby license.
+
+### What was built:
+
+**Theme refinement:**
+- Light mode: `#faf9f6` (off-white) background + `#f0f0f0` (smoky white) cards — the pure white was blinding on mode switch
+- Dark mode: `#2c2c2c` (charcoal) background + `#444444` (lifted) cards — less contrasty, easier on the eyes
+- Updated all CSS variables: canvas, dot grid, tldraw shape colors, popovers, borders
+
+**Image upload discoverability:**
+- Added `+ Image` button to the "Add Bead to Garland" dialog — previously images could only be uploaded via tldraw's own toolbar (non-obvious)
+- Added `+ Image` button to the home page header
+- Added "Images" filter tab on home page — filters beads with `media_type: "image"`
+- Created reusable `uploadImageAndCreateBlock` utility (`lib/utils/upload-image.ts`)
+- Refactored home page filters from type-based (`BlockType | null`) to key-based system to support compound filters (Images = `type: reference` + `media_type: image`)
+- Added `media_type` parameter to `getBlocks()` server action
+
+**Connector discoverability:**
+- Added "Connect" button in the garland header toolbar — one click activates tldraw's arrow tool
+- Added `onEditorReady` callback prop to TldrawCanvas so parent can control the editor programmatically
+- Added toast notification: "Connected — fields synced" appears for 3 seconds when two beads are linked via arrow
+- Expanded Help Modal with a dedicated "How to Connect Beads" step-by-step section (3 numbered steps + field preservation note)
+- Renamed "Arrow" to "Arrow / Connect" in the Canvas Tools shortcuts section
+
+**tldraw hobby license:**
+- Received hobby license key from tldraw.dev (valid through 2031-02-23)
+- Domain-locked to `*.the-vault-one.vercel.app`
+- Added `licenseKey` prop to `<Tldraw>` component via `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` env var
+- Watermark now removed on production deployments
+
+### Key decisions:
+- **Key-based filter system** — the old `typeFilter: BlockType | null` couldn't express "all references that are images." Switched to a `FilterDef` array with `key`, `type`, `mediaType` fields. Each filter button maps to a unique key, and the active key drives both the `type` and `media_type` query params.
+- **onEditorReady callback** — rather than importing tldraw's Editor type and managing it from the page, the canvas exposes the editor instance via callback. Clean separation: page owns UI chrome, canvas owns tldraw internals.
+- **Toast over modal** — for connector feedback, a toast is less intrusive than a dialog. Auto-dismisses after 3s, positioned bottom-center of the canvas wrapper.
+
+### Bugs avoided:
+- **Shell bracket quoting** — `git add app/board/[id]/page.tsx` fails in zsh because brackets are glob patterns. Must quote: `git add "app/board/[id]/page.tsx"`
+- **Stale closure in handleMount** — when `onEditorReady` was added to the `handleMount` callback, it needed to be included in the `useCallback` dependency array to avoid calling a stale reference
+- **Toast timeout leak** — used `useRef` for the timeout ID and clear it on component unmount to prevent setting state on an unmounted component
 
 ---
 

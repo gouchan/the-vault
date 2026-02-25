@@ -3,60 +3,60 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #0a0a0c;
-  --card-foreground: #fafafa;
-  --popover: #09090b;
-  --popover-foreground: #fafafa;
-  --primary: #e4e4e7;
-  --primary-foreground: #18181b;
-  --secondary: #1c1c22;
-  --secondary-foreground: #fafafa;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --accent: #1c1c22;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #d4d4d8;
+  --background: #2c2c2c;
+  --foreground: #e8e8e8;
+  --card: #444444;
+  --card-foreground: #e8e8e8;
+  --popover: #3a3a3a;
+  --popover-foreground: #e8e8e8;
+  --primary: #d4d4d4;
+  --primary-foreground: #2c2c2c;
+  --secondary: #3a3a3a;
+  --secondary-foreground: #e8e8e8;
+  --muted: #383838;
+  --muted-foreground: #999999;
+  --accent: #3a3a3a;
+  --accent-foreground: #e8e8e8;
+  --destructive: #8b2020;
+  --destructive-foreground: #e8e8e8;
+  --border: #505050;
+  --input: #505050;
+  --ring: #bbbbbb;
   --radius: 0.5rem;
   --sticky-yellow: #FFE066;
   --sticky-yellow-dark: #E6C84D;
   --sticky-yellow-bg: #2a2610;
   --sticky-yellow-border: #4d4520;
-  --sticky-yellow-fg: #18181b;
+  --sticky-yellow-fg: #2c2c2c;
   --pin-active: #FFE066;
 }
 
 .light {
-  --background: #fafafa;
-  --foreground: #09090b;
-  --card: #ffffff;
-  --card-foreground: #09090b;
-  --popover: #ffffff;
-  --popover-foreground: #09090b;
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #18181b;
+  --background: #faf9f6;
+  --foreground: #1a1a1a;
+  --card: #f0f0f0;
+  --card-foreground: #1a1a1a;
+  --popover: #f0f0f0;
+  --popover-foreground: #1a1a1a;
+  --primary: #1a1a1a;
+  --primary-foreground: #faf9f6;
+  --secondary: #e8e8e5;
+  --secondary-foreground: #1a1a1a;
+  --muted: #e8e8e5;
+  --muted-foreground: #6b6b6b;
+  --accent: #e8e8e5;
+  --accent-foreground: #1a1a1a;
+  --destructive: #c0392b;
+  --destructive-foreground: #faf9f6;
+  --border: #d8d8d5;
+  --input: #d8d8d5;
+  --ring: #1a1a1a;
   --sticky-yellow: #FFD93D;
   --sticky-yellow-dark: #E6C22E;
   --sticky-yellow-bg: #FFF9DB;
   --sticky-yellow-border: #FFE066;
-  --sticky-yellow-fg: #18181b;
-  --pin-active: #52525b;
+  --sticky-yellow-fg: #1a1a1a;
+  --pin-active: #444444;
 }
 
 * {
@@ -76,15 +76,15 @@ body {
 }
 
 :root {
-  --dot-color: rgba(255, 255, 255, 0.06);
-  --canvas-bg: #070709;
-  --canvas-dot: #333;
+  --dot-color: rgba(255, 255, 255, 0.07);
+  --canvas-bg: #282828;
+  --canvas-dot: #4a4a4a;
 }
 
 .light {
-  --dot-color: rgba(0, 0, 0, 0.08);
-  --canvas-bg: #f8f8f8;
-  --canvas-dot: #ccc;
+  --dot-color: rgba(0, 0, 0, 0.07);
+  --canvas-bg: #f0f0f0;
+  --canvas-dot: #c8c8c4;
 }
 
 /* Scrollbar styling */
@@ -149,32 +149,32 @@ body {
 
 /* Moleskine dot grid on the tldraw canvas background */
 .tl-background {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0.8px, transparent 0.8px) !important;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 0.8px, transparent 0.8px) !important;
   background-size: 12px 12px !important;
 }
 
 .light .tl-background {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 0.8px, transparent 0.8px) !important;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.07) 0.8px, transparent 0.8px) !important;
   background-size: 12px 12px !important;
 }
 
 /* tldraw custom shape CSS variables for block rendering */
 :root {
-  --color-card: #0a0a0c;
-  --color-text: #fafafa;
-  --color-border: #27272a;
-  --color-muted: #1c1c22;
-  --color-muted-fg: #a1a1aa;
+  --color-card: #444444;
+  --color-text: #e8e8e8;
+  --color-border: #505050;
+  --color-muted: #3a3a3a;
+  --color-muted-fg: #999999;
   --color-note-bg: #2a2610;
   --color-note-border: #4d4520;
 }
 
 .light {
-  --color-card: #ffffff;
-  --color-text: #09090b;
-  --color-border: #e4e4e7;
-  --color-muted: #f4f4f5;
-  --color-muted-fg: #71717a;
+  --color-card: #f0f0f0;
+  --color-text: #1a1a1a;
+  --color-border: #d8d8d5;
+  --color-muted: #e8e8e5;
+  --color-muted-fg: #6b6b6b;
   --color-note-bg: #FFF9DB;
   --color-note-border: #FFE066;
 }

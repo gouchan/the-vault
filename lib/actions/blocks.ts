@@ -5,6 +5,7 @@ import type { Block, BlockType, CreatePersonInput, CreateReferenceInput, CreateN
 
 export async function getBlocks(options?: {
   type?: BlockType;
+  media_type?: string;
   search?: string;
   tagId?: string;
   limit?: number;
@@ -17,6 +18,9 @@ export async function getBlocks(options?: {
 
   if (options?.type) {
     query = query.eq("type", options.type);
+  }
+  if (options?.media_type) {
+    query = query.eq("media_type", options.media_type);
   }
   if (options?.pinned) {
     query = query.eq("pinned", true);

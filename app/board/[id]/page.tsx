@@ -13,7 +13,9 @@ import { BlockForm } from "@/components/forms/BlockForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Block, BlockType, CanvasPosition } from "@/types/block";
-import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock } from "lucide-react";
+import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight } from "lucide-react";
+import type { Editor } from "@tldraw/tldraw";
+import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
 
 // Dynamic import — tldraw must not be SSR'd
 const TldrawCanvas = dynamic(
@@ -38,6 +40,7 @@ export default function BoardPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tldrawEditor, setTldrawEditor] = useState<Editor | null>(null);
 
   const loadBoard = useCallback(async () => {
     try {
@@ -85,6 +88,15 @@ export default function BoardPage() {
     loadBoard();
   }
 
+  async function handleImageUpload() {
+    setAddDialogOpen(false);
+    const block = await uploadImageAndCreateBlock();
+    if (block) {
+      await addBlockToBoard(boardId, block.id);
+      loadBoard();
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -116,6 +128,19 @@ export default function BoardPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Connect tool (canvas only) */}
+          {view === "canvas" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => tldrawEditor?.setCurrentTool("arrow")}
+              title="Draw a connector between two beads (A)"
+              className="h-8"
+            >
+              <ArrowRight className="h-4 w-4 mr-1" /> Connect
+            </Button>
+          )}
+
           {/* History toggle (canvas only) */}
           {view === "canvas" && (
             <Button
@@ -179,6 +204,7 @@ export default function BoardPage() {
                 else router.push(`/block/${block.id}`);
               }}
               onBlocksChanged={loadBoard}
+              onEditorReady={setTldrawEditor}
             />
           </div>
 
@@ -213,6 +239,9 @@ export default function BoardPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleCreateAndAdd("note")} className="text-xs">
               <FileText className="mr-1 h-3 w-3" /> New Note
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleImageUpload} className="text-xs">
+              <ImageIcon className="mr-1 h-3 w-3" /> + Image
             </Button>
           </div>
 

@@ -90,8 +90,27 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="flex gap-2">
                 <Circle className="h-3 w-3 mt-0.5 flex-shrink-0 text-[var(--sticky-yellow)]" />
-                <span><strong className="text-[var(--foreground)]">Connectors</strong> — draw arrows between beads to sync shared fields</span>
+                <span><strong className="text-[var(--foreground)]">Connectors</strong> — arrows between beads that sync shared data</span>
               </div>
+            </div>
+          </Section>
+
+          {/* How to connect */}
+          <Section title="How to Connect Beads">
+            <div className="space-y-2.5 text-xs text-[var(--muted-foreground)]">
+              <div className="flex gap-2">
+                <span className="text-[var(--sticky-yellow)] font-bold flex-shrink-0 w-3 text-center">1</span>
+                <span>Click <strong className="text-[var(--foreground)]">Connect</strong> in the toolbar, or press <Key>A</Key></span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-[var(--sticky-yellow)] font-bold flex-shrink-0 w-3 text-center">2</span>
+                <span>Click a <strong className="text-[var(--foreground)]">source bead</strong> and drag the arrow to a <strong className="text-[var(--foreground)]">target bead</strong></span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-[var(--sticky-yellow)] font-bold flex-shrink-0 w-3 text-center">3</span>
+                <span>Shared fields sync automatically: <strong className="text-[var(--foreground)]">URL, description, notes, tags, OG metadata</strong></span>
+              </div>
+              <p className="text-[10px] opacity-60 pt-0.5 pl-5">Only empty fields on the target are filled — existing data is never overwritten.</p>
             </div>
           </Section>
 
@@ -115,7 +134,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
             <ShortcutRow label="Select" keys={["V", "1"]} />
             <ShortcutRow label="Hand (pan)" keys={["H"]} />
             <ShortcutRow label="Draw (freehand)" keys={["P", "7"]} />
-            <ShortcutRow label="Arrow" keys={["A", "5"]} />
+            <ShortcutRow label="Arrow / Connect" keys={["A", "5"]} />
             <ShortcutRow label="Text" keys={["T", "8"]} />
             <ShortcutRow label="Rectangle" keys={["R", "2"]} />
             <ShortcutRow label="Ellipse" keys={["O", "4"]} />

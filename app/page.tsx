@@ -10,32 +10,50 @@ import { BlockForm } from "@/components/forms/BlockForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Block, BlockType } from "@/types/block";
-import { User, Link2, FileText, Filter, Loader2 } from "lucide-react";
+import { User, Link2, FileText, Filter, Loader2, Image as ImageIcon } from "lucide-react";
+import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
 
 const PAGE_SIZE = 20;
 
-const typeFilters: { type: BlockType | null; label: string; icon: React.ElementType }[] = [
-  { type: null, label: "All Beads", icon: Filter },
-  { type: "person", label: "People", icon: User },
-  { type: "reference", label: "References", icon: Link2 },
-  { type: "note", label: "Notes", icon: FileText },
+type FilterDef = {
+  key: string;
+  type: BlockType | null;
+  mediaType?: string;
+  label: string;
+  icon: React.ElementType;
+};
+
+const typeFilters: FilterDef[] = [
+  { key: "all", type: null, label: "All Beads", icon: Filter },
+  { key: "person", type: "person", label: "People", icon: User },
+  { key: "reference", type: "reference", label: "References", icon: Link2 },
+  { key: "note", type: "note", label: "Notes", icon: FileText },
+  { key: "images", type: "reference", mediaType: "image", label: "Images", icon: ImageIcon },
 ];
 
 export default function HomePage() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
-  const [typeFilter, setTypeFilter] = useState<BlockType | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [createType, setCreateType] = useState<BlockType | null>(null);
 
+  const currentFilterDef = typeFilters.find((f) => f.key === activeFilter) || typeFilters[0];
+  const typeFilter = currentFilterDef.type;
+  const mediaTypeFilter = currentFilterDef.mediaType;
+
   const loadBlocks = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
     try {
-      const data = await getBlocks({ type: typeFilter ?? undefined, limit: PAGE_SIZE });
+      const data = await getBlocks({
+        type: typeFilter ?? undefined,
+        media_type: mediaTypeFilter,
+        limit: PAGE_SIZE,
+      });
       setBlocks(data);
       setHasMore(data.length >= PAGE_SIZE);
     } catch (err) {
@@ -44,13 +62,14 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter]);
+  }, [typeFilter, mediaTypeFilter]);
 
   const loadMore = useCallback(async () => {
     setLoadingMore(true);
     try {
       const data = await getBlocks({
         type: typeFilter ?? undefined,
+        media_type: mediaTypeFilter,
         limit: PAGE_SIZE,
         offset: blocks.length,
       });
@@ -61,7 +80,7 @@ export default function HomePage() {
     } finally {
       setLoadingMore(false);
     }
-  }, [typeFilter, blocks.length]);
+  }, [typeFilter, mediaTypeFilter, blocks.length]);
 
   useEffect(() => {
     loadBlocks();
@@ -76,6 +95,13 @@ export default function HomePage() {
   }, [loadBlocks]);
 
   const router = useRouter();
+
+  async function handleImageUpload() {
+    const block = await uploadImageAndCreateBlock();
+    if (block) {
+      loadBlocks();
+    }
+  }
 
   function handleBlockClick(block: Block) {
     if (block.type === "board") {
@@ -105,10 +131,10 @@ export default function HomePage() {
         <div className="flex items-center gap-1">
           {typeFilters.map((f) => (
             <Button
-              key={f.label}
-              variant={typeFilter === f.type ? "secondary" : "ghost"}
+              key={f.key}
+              variant={activeFilter === f.key ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setTypeFilter(f.type)}
+              onClick={() => setActiveFilter(f.key)}
               className="text-xs"
             >
               <f.icon className="mr-1 h-3 w-3" />
@@ -129,6 +155,14 @@ export default function HomePage() {
               + {type.charAt(0).toUpperCase() + type.slice(1)}
             </Button>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleImageUpload}
+            className="text-xs"
+          >
+            <ImageIcon className="mr-1 h-3 w-3" /> + Image
+          </Button>
         </div>
       </div>
 

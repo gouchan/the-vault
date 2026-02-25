@@ -6,8 +6,27 @@ All notable changes to Rosary (formerly The Vault).
 
 ## [Unreleased]
 
-### Pending
-- tldraw hobby license key for production deployments
+*(nothing pending)*
+
+---
+
+## 2026-02-25 — tldraw License + UX Improvements
+
+### Added
+- **tldraw hobby license key** — watermark removed on `*.the-vault-one.vercel.app` (valid through 2031-02-23)
+- **"+ Image" upload button** on home page and "Add Bead to Garland" dialog
+- **"Images" filter tab** on home page — filters beads with `media_type: "image"`
+- **"Connect" button** in garland toolbar — one-click arrow tool activation for drawing connectors
+- **Toast notification** — "Connected — fields synced" appears when two beads are connected via arrow
+- **"How to Connect Beads"** step-by-step guide in Help Modal
+- Reusable `uploadImageAndCreateBlock` utility for image upload flows
+
+### Changed
+- Light mode: `#faf9f6` (off-white) background + `#f0f0f0` (smoky white) cards — less harsh
+- Dark mode: `#2c2c2c` (charcoal) background + `#444444` (lifted) cards — less contrasty
+- Home page filters refactored from type-based to key-based system (supports compound filters like Images)
+- "Arrow" renamed to "Arrow / Connect" in Help Modal shortcuts
+- `getBlocks()` now accepts optional `media_type` filter parameter
 
 ---
 

@@ -184,7 +184,7 @@ All data operations use Next.js Server Actions with `"use server"`. No custom AP
 
 ## Canvas License
 
-The infinite canvas uses [tldraw](https://tldraw.dev) under their SDK license. The "Made with tldraw" watermark is displayed on the canvas as required. A free hobby license key is needed for production deployments — apply at [tldraw.dev/get-a-license/hobby](https://tldraw.dev/get-a-license/hobby).
+The infinite canvas uses [tldraw](https://tldraw.dev) under their SDK license with a hobby license key. The license is configured via the `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` environment variable and is valid for `*.the-vault-one.vercel.app` through 2031. Set this in both `.env.local` and your Vercel project environment variables.
 
 ## License
 

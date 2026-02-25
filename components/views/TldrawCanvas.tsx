@@ -39,6 +39,7 @@ interface TldrawCanvasProps {
   previewSnapshot?: Record<string, any> | null;
   onBlockClick?: (block: Block) => void;
   onBlocksChanged?: () => void;
+  onEditorReady?: (editor: Editor) => void;
 }
 
 export function TldrawCanvas({
@@ -48,6 +49,7 @@ export function TldrawCanvas({
   previewSnapshot,
   onBlockClick,
   onBlocksChanged,
+  onEditorReady,
 }: TldrawCanvasProps) {
   const { resolvedTheme } = useTheme();
   const resolvedThemeRef = useRef(resolvedTheme);
@@ -64,6 +66,8 @@ export function TldrawCanvas({
 
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle");
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Sync next-themes → tldraw dark mode ────────────────────
   useEffect(() => {
@@ -174,7 +178,13 @@ export function TldrawCanvas({
             const fromBlockId = (startShape as VaultBlockShape).props.blockId;
             const toBlockId = (endShape as VaultBlockShape).props.blockId;
             if (fromBlockId && toBlockId) {
-              syncConnectedFields(fromBlockId, toBlockId).catch(console.error);
+              syncConnectedFields(fromBlockId, toBlockId)
+                .then(() => {
+                  if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+                  setToastMessage("Connected — fields synced");
+                  toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
+                })
+                .catch(console.error);
             }
           }
         }
@@ -350,6 +360,7 @@ export function TldrawCanvas({
   const handleMount = useCallback(
     (editor: Editor) => {
       editorRef.current = editor;
+      onEditorReady?.(editor);
 
       // Sync theme immediately on mount
       const scheme = resolvedThemeRef.current === "light" ? "light" : "dark";
@@ -393,7 +404,7 @@ export function TldrawCanvas({
         saveHistoryIfChanged(editor);
       }, HISTORY_INTERVAL_MS);
     },
-    [initializeEditor, debouncedSave, handleArrowBinding, onBlockClick, saveHistoryIfChanged]
+    [initializeEditor, debouncedSave, handleArrowBinding, onBlockClick, onEditorReady, saveHistoryIfChanged]
   );
 
   // ── Sync blocks prop changes into tldraw ─────────────────────
@@ -507,6 +518,7 @@ export function TldrawCanvas({
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       if (historyIntervalRef.current) clearInterval(historyIntervalRef.current);
 
       // Final save on unmount
@@ -571,6 +583,7 @@ export function TldrawCanvas({
       onDragOver={handleDragOver}
     >
       <Tldraw
+        licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
         shapeUtils={shapeUtils}
         onMount={handleMount}
         options={{
@@ -592,6 +605,13 @@ export function TldrawCanvas({
       >
         {saveStatus === "saving" ? "Saving..." : "Saved"}
       </div>
+
+      {/* Connector toast */}
+      {toastMessage && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1.5 rounded-md bg-[var(--sticky-yellow)] text-[var(--sticky-yellow-fg)] font-medium shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
