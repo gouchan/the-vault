@@ -23,7 +23,12 @@ import {
 } from "@/lib/actions/tldraw";
 import { createBlock } from "@/lib/actions/blocks";
 import { addBlockToBoard } from "@/lib/actions/boards";
-import { syncConnectedFields } from "@/lib/actions/connectors";
+import {
+  getConnectorPreview,
+  syncSelectedFields as syncSelectedFieldsAction,
+  type ConnectorPreviewData,
+} from "@/lib/actions/connectors";
+import { ConnectorPreviewSheet } from "./ConnectorPreviewSheet";
 
 // ── Constants ──────────────────────────────────────────────────
 const AUTOSAVE_DEBOUNCE_MS = 1000;
@@ -68,6 +73,17 @@ export function TldrawCanvas({
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Connector preview sheet
+  const [pendingConnection, setPendingConnection] = useState<{
+    fromBlockId: string;
+    toBlockId: string;
+    preview: ConnectorPreviewData;
+  } | null>(null);
+  const pendingConnectionRef = useRef(pendingConnection);
+  pendingConnectionRef.current = pendingConnection;
+  // Track which arrow+connection pairs have already triggered the sheet
+  const seenConnectionsRef = useRef<Set<string>>(new Set());
 
   // ── Sync next-themes → tldraw dark mode ────────────────────
   useEffect(() => {
@@ -157,11 +173,10 @@ export function TldrawCanvas({
     [boardId]
   );
 
-  // ── Handle arrow binding → connector sync ────────────────────
+  // ── Handle arrow binding → show connector preview sheet ──────
   const handleArrowBinding = useCallback(
-    (editor: Editor) => {
-      // Check all arrow shapes for bindings between vault-block shapes
-      const arrows = editor.getCurrentPageShapes().filter((s) => s.type === "arrow");
+    (editor: Editor, changedArrowId: string) => {
+      const arrows = editor.getCurrentPageShapes().filter((s) => s.type === "arrow" && s.id === changedArrowId);
       for (const arrow of arrows) {
         const bindings = editor.getBindingsFromShape(arrow, "arrow");
         const startBinding = bindings.find((b: any) => b.props?.terminal === "start");
@@ -171,19 +186,16 @@ export function TldrawCanvas({
           const startShape = editor.getShape(startBinding.toId);
           const endShape = editor.getShape(endBinding.toId);
 
-          if (
-            startShape?.type === "vault-block" &&
-            endShape?.type === "vault-block"
-          ) {
+          if (startShape?.type === "vault-block" && endShape?.type === "vault-block") {
             const fromBlockId = (startShape as VaultBlockShape).props.blockId;
             const toBlockId = (endShape as VaultBlockShape).props.blockId;
-            if (fromBlockId && toBlockId) {
-              syncConnectedFields(fromBlockId, toBlockId)
-                .then(() => {
-                  if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-                  setToastMessage("Connected — fields synced");
-                  toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
-                })
+            // Key per arrow ID so each drawn arrow only triggers once
+            const connectionKey = `${arrow.id}:${fromBlockId}->${toBlockId}`;
+
+            if (fromBlockId && toBlockId && !seenConnectionsRef.current.has(connectionKey)) {
+              seenConnectionsRef.current.add(connectionKey);
+              getConnectorPreview(fromBlockId, toBlockId)
+                .then((preview) => setPendingConnection({ fromBlockId, toBlockId, preview }))
                 .catch(console.error);
             }
           }
@@ -192,6 +204,29 @@ export function TldrawCanvas({
     },
     []
   );
+
+  // ── Connector preview handlers ────────────────────────────────
+  async function handleSyncConnection(selectedFields: string[], syncTags: boolean) {
+    const conn = pendingConnectionRef.current;
+    if (!conn) return;
+    setPendingConnection(null);
+    try {
+      const result = await syncSelectedFieldsAction(conn.fromBlockId, conn.toBlockId, selectedFields, syncTags);
+      const count = (result?.fieldsCopied ?? 0) + (result?.tagsSynced ? 1 : 0);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      setToastMessage(count > 0 ? `Synced ${count} field${count !== 1 ? "s" : ""}` : "Connected");
+      toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
+    } catch (err) {
+      console.error("Sync failed:", err);
+    }
+  }
+
+  function handleSkipConnection() {
+    setPendingConnection(null);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage("Connected");
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2000);
+  }
 
   // ── Upload file → create block → add shape ──────────────────
   const handleFileUpload = useCallback(
@@ -380,10 +415,10 @@ export function TldrawCanvas({
         { scope: "document", source: "user" }
       );
 
-      // ── Listen for arrow changes → connector sync ────────────
+      // ── Listen for arrow changes → connector preview sheet ───
       editor.sideEffects.registerAfterChangeHandler("shape", (prev, next) => {
         if (next.type === "arrow") {
-          handleArrowBinding(editor);
+          handleArrowBinding(editor, next.id);
         }
       });
 
@@ -606,9 +641,18 @@ export function TldrawCanvas({
         {saveStatus === "saving" ? "Saving..." : "Saved"}
       </div>
 
+      {/* Connector preview sheet */}
+      {pendingConnection && (
+        <ConnectorPreviewSheet
+          preview={pendingConnection.preview}
+          onSync={handleSyncConnection}
+          onSkip={handleSkipConnection}
+        />
+      )}
+
       {/* Connector toast */}
-      {toastMessage && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1.5 rounded-md bg-[var(--sticky-yellow)] text-[var(--sticky-yellow-fg)] font-medium shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+      {toastMessage && !pendingConnection && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs px-3 py-1.5 rounded-md bg-[var(--sticky-yellow)] text-[var(--sticky-yellow-fg)] font-medium shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
           {toastMessage}
         </div>
       )}
