@@ -3,14 +3,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #2c2c2c;
+  --background: #232323;
   --foreground: #e8e8e8;
   --card: #444444;
   --card-foreground: #e8e8e8;
   --popover: #3a3a3a;
   --popover-foreground: #e8e8e8;
   --primary: #d4d4d4;
-  --primary-foreground: #2c2c2c;
+  --primary-foreground: #232323;
   --secondary: #3a3a3a;
   --secondary-foreground: #e8e8e8;
   --muted: #383838;
@@ -27,7 +27,7 @@
   --sticky-yellow-dark: #E6C84D;
   --sticky-yellow-bg: #2a2610;
   --sticky-yellow-border: #4d4520;
-  --sticky-yellow-fg: #2c2c2c;
+  --sticky-yellow-fg: #232323;
   --pin-active: #FFE066;
 }
 
