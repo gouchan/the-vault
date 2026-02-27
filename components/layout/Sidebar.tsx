@@ -17,7 +17,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   GripVertical,
-  Pin,
   HelpCircle,
   Trash2,
 } from "lucide-react";
@@ -318,19 +317,21 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   >
                     {/* Drag handle */}
                     <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-40 cursor-grab flex-shrink-0 transition-opacity" />
-                    <CircleDot className="h-3.5 w-3.5 flex-shrink-0" />
-                    {/* Pin — next to CircleDot */}
+                    {/* CircleDot — doubles as pin toggle */}
                     <button
                       onClick={(e) => handleTogglePin(board, e)}
                       className={cn(
-                        "flex-shrink-0 p-0.5 rounded transition-all -ml-1",
+                        "flex-shrink-0 rounded transition-all",
                         board.pinned
-                          ? "opacity-100 text-[var(--pin-active)]"
-                          : "opacity-0 group-hover:opacity-60 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                          ? "text-[var(--sticky-yellow)]"
+                          : "text-current"
                       )}
                       title={board.pinned ? "Unpin garland" : "Pin garland to top"}
                     >
-                      <Pin className="h-3 w-3" />
+                      <CircleDot
+                        className="h-3.5 w-3.5"
+                        fill={board.pinned ? "var(--sticky-yellow)" : "none"}
+                      />
                     </button>
                     <span className="truncate flex-1">{board.title || "Untitled"}</span>
                     {/* Delete — hover reveal, far right */}
