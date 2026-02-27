@@ -35,7 +35,7 @@ export function ConnectorPreviewSheet({ preview, onSync, onSkip }: ConnectorPrev
   }
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 w-80 rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+    <div className="w-80 rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
 
       {/* Header */}
       <div className="flex items-center gap-1.5 px-4 py-3 border-b border-[var(--border)]">

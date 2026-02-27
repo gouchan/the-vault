@@ -79,6 +79,8 @@ export function TldrawCanvas({
     fromBlockId: string;
     toBlockId: string;
     preview: ConnectorPreviewData;
+    screenX: number;
+    screenY: number;
   } | null>(null);
   const pendingConnectionRef = useRef(pendingConnection);
   pendingConnectionRef.current = pendingConnection;
@@ -176,31 +178,50 @@ export function TldrawCanvas({
   // ── Handle arrow binding → show connector preview sheet ──────
   const handleArrowBinding = useCallback(
     (editor: Editor, changedArrowId: string) => {
-      const arrows = editor.getCurrentPageShapes().filter((s) => s.type === "arrow" && s.id === changedArrowId);
-      for (const arrow of arrows) {
-        const bindings = editor.getBindingsFromShape(arrow, "arrow");
-        const startBinding = bindings.find((b: any) => b.props?.terminal === "start");
-        const endBinding = bindings.find((b: any) => b.props?.terminal === "end");
+      const arrow = editor.getShape(changedArrowId as any);
+      if (!arrow || arrow.type !== "arrow") return;
 
-        if (startBinding && endBinding) {
-          const startShape = editor.getShape(startBinding.toId);
-          const endShape = editor.getShape(endBinding.toId);
+      const bindings = editor.getBindingsFromShape(arrow, "arrow");
+      const startBinding = bindings.find((b: any) => b.props?.terminal === "start");
+      const endBinding = bindings.find((b: any) => b.props?.terminal === "end");
 
-          if (startShape?.type === "vault-block" && endShape?.type === "vault-block") {
-            const fromBlockId = (startShape as VaultBlockShape).props.blockId;
-            const toBlockId = (endShape as VaultBlockShape).props.blockId;
-            // Key per arrow ID so each drawn arrow only triggers once
-            const connectionKey = `${arrow.id}:${fromBlockId}->${toBlockId}`;
+      if (!startBinding || !endBinding) return;
 
-            if (fromBlockId && toBlockId && !seenConnectionsRef.current.has(connectionKey)) {
-              seenConnectionsRef.current.add(connectionKey);
-              getConnectorPreview(fromBlockId, toBlockId)
-                .then((preview) => setPendingConnection({ fromBlockId, toBlockId, preview }))
-                .catch(console.error);
-            }
-          }
-        }
+      const startShape = editor.getShape(startBinding.toId);
+      const endShape = editor.getShape(endBinding.toId);
+
+      if (startShape?.type !== "vault-block" || endShape?.type !== "vault-block") return;
+
+      const fromBlockId = (startShape as VaultBlockShape).props.blockId;
+      const toBlockId = (endShape as VaultBlockShape).props.blockId;
+      const connectionKey = `${arrow.id}:${fromBlockId}->${toBlockId}`;
+
+      if (!fromBlockId || !toBlockId || seenConnectionsRef.current.has(connectionKey)) return;
+      seenConnectionsRef.current.add(connectionKey);
+
+      // Calculate screen position: midpoint between the two connected shapes
+      const startBounds = editor.getShapeMaskedPageBounds(startShape.id);
+      const endBounds = editor.getShapeMaskedPageBounds(endShape.id);
+      let screenX = 0;
+      let screenY = 0;
+      if (startBounds && endBounds) {
+        const midPage = {
+          x: (startBounds.midX + endBounds.midX) / 2,
+          y: (startBounds.midY + endBounds.midY) / 2,
+        };
+        const screen = editor.pageToScreen(midPage);
+        screenX = screen.x;
+        screenY = screen.y;
       }
+
+      getConnectorPreview(fromBlockId, toBlockId)
+        .then((preview) => {
+          // Use rAF so state update lands in React's rendering cycle
+          requestAnimationFrame(() => {
+            setPendingConnection({ fromBlockId, toBlockId, preview, screenX, screenY });
+          });
+        })
+        .catch(console.error);
     },
     []
   );
@@ -415,7 +436,14 @@ export function TldrawCanvas({
         { scope: "document", source: "user" }
       );
 
-      // ── Listen for arrow changes → connector preview sheet ───
+      // ── Listen for binding creation → connector preview sheet ─
+      // Fires when tldraw creates a new arrow binding (more reliable than shape change)
+      editor.sideEffects.registerAfterCreateHandler("binding", (binding: any) => {
+        if (binding.type === "arrow") {
+          handleArrowBinding(editor, binding.fromId);
+        }
+      });
+      // Also listen for shape changes as a fallback
       editor.sideEffects.registerAfterChangeHandler("shape", (prev, next) => {
         if (next.type === "arrow") {
           handleArrowBinding(editor, next.id);
@@ -641,13 +669,26 @@ export function TldrawCanvas({
         {saveStatus === "saving" ? "Saving..." : "Saved"}
       </div>
 
-      {/* Connector preview sheet */}
+      {/* Connector preview sheet — positioned near the connection midpoint */}
       {pendingConnection && (
-        <ConnectorPreviewSheet
-          preview={pendingConnection.preview}
-          onSync={handleSyncConnection}
-          onSkip={handleSkipConnection}
-        />
+        <div
+          style={{
+            position: "absolute",
+            // Sheet is 320px wide, 8px margin from edges
+            left: Math.min(Math.max(pendingConnection.screenX - 160, 8), (typeof window !== "undefined" ? window.innerWidth : 800) - 328),
+            // Position sheet above the midpoint; if too close to top, flip below
+            top: pendingConnection.screenY > 220
+              ? pendingConnection.screenY - 230
+              : pendingConnection.screenY + 30,
+            zIndex: 50,
+          }}
+        >
+          <ConnectorPreviewSheet
+            preview={pendingConnection.preview}
+            onSync={handleSyncConnection}
+            onSkip={handleSkipConnection}
+          />
+        </div>
       )}
 
       {/* Connector toast */}
