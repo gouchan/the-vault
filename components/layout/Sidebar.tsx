@@ -19,12 +19,14 @@ import {
   GripVertical,
   Pin,
   HelpCircle,
+  Trash2,
 } from "lucide-react";
 import { HelpModal } from "./HelpModal";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getBoards } from "@/lib/actions/boards";
-import { createBlock, updateBlock } from "@/lib/actions/blocks";
+import { createBlock, updateBlock, deleteBlock } from "@/lib/actions/blocks";
 import type { Block } from "@/types/block";
 
 interface SidebarProps {
@@ -34,6 +36,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [boards, setBoards] = useState<Block[]>([]);
@@ -111,6 +114,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     e.stopPropagation();
     await updateBlock(board.id, { pinned: !board.pinned });
     loadBoards();
+  }
+
+  async function handleDeleteBoard(board: Block, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm(`Delete "${board.title || "Untitled"}"?`)) return;
+    await deleteBlock(board.id);
+    window.dispatchEvent(new Event("vault:refresh"));
+    if (pathname === `/board/${board.id}`) {
+      router.push("/");
+    }
   }
 
   // ── Drag handlers ──────────────────────────────────────────
@@ -305,12 +319,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     {/* Drag handle */}
                     <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-40 cursor-grab flex-shrink-0 transition-opacity" />
                     <CircleDot className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate flex-1">{board.title || "Untitled"}</span>
-                    {/* Single pin button — yellow when pinned, grey on hover when unpinned */}
+                    {/* Pin — next to CircleDot */}
                     <button
                       onClick={(e) => handleTogglePin(board, e)}
                       className={cn(
-                        "flex-shrink-0 p-0.5 rounded transition-all",
+                        "flex-shrink-0 p-0.5 rounded transition-all -ml-1",
                         board.pinned
                           ? "opacity-100 text-[var(--pin-active)]"
                           : "opacity-0 group-hover:opacity-60 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
@@ -318,6 +331,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       title={board.pinned ? "Unpin garland" : "Pin garland to top"}
                     >
                       <Pin className="h-3 w-3" />
+                    </button>
+                    <span className="truncate flex-1">{board.title || "Untitled"}</span>
+                    {/* Delete — hover reveal, far right */}
+                    <button
+                      onClick={(e) => handleDeleteBoard(board, e)}
+                      className="flex-shrink-0 p-0.5 rounded transition-all opacity-0 group-hover:opacity-60 text-[var(--muted-foreground)] hover:text-red-400"
+                      title="Delete garland"
+                    >
+                      <Trash2 className="h-3 w-3" />
                     </button>
                   </Link>
                 </div>
