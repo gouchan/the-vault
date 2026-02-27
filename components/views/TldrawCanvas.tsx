@@ -73,6 +73,7 @@ export function TldrawCanvas({
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Connector preview sheet
   const [pendingConnection, setPendingConnection] = useState<{
@@ -199,19 +200,23 @@ export function TldrawCanvas({
       if (!fromBlockId || !toBlockId || seenConnectionsRef.current.has(connectionKey)) return;
       seenConnectionsRef.current.add(connectionKey);
 
-      // Calculate screen position: midpoint between the two connected shapes
+      // Calculate viewport position: midpoint between the two connected shapes
+      // editor.pageToScreen() returns coords relative to the tldraw container element.
+      // To use position:fixed (viewport space) we offset by the container's rect.
       const startBounds = editor.getShapeMaskedPageBounds(startShape.id);
       const endBounds = editor.getShapeMaskedPageBounds(endShape.id);
-      let screenX = 0;
-      let screenY = 0;
+      let screenX = window.innerWidth / 2;
+      let screenY = window.innerHeight / 2;
       if (startBounds && endBounds) {
         const midPage = {
           x: (startBounds.midX + endBounds.midX) / 2,
           y: (startBounds.midY + endBounds.midY) / 2,
         };
-        const screen = editor.pageToScreen(midPage);
-        screenX = screen.x;
-        screenY = screen.y;
+        const containerCoord = editor.pageToScreen(midPage);
+        // Offset by the container's position in the viewport
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        screenX = containerCoord.x + (containerRect?.left ?? 0);
+        screenY = containerCoord.y + (containerRect?.top ?? 0);
       }
 
       getConnectorPreview(fromBlockId, toBlockId)
@@ -640,6 +645,7 @@ export function TldrawCanvas({
 
   return (
     <div
+      ref={containerRef}
       className="relative w-full rounded-lg overflow-hidden border border-[var(--border)]"
       style={{ height: "100%", minHeight: "300px" }}
       onDrop={handleDrop}
@@ -669,18 +675,21 @@ export function TldrawCanvas({
         {saveStatus === "saving" ? "Saving..." : "Saved"}
       </div>
 
-      {/* Connector preview sheet — positioned near the connection midpoint */}
+      {/* Connector preview sheet — fixed to viewport so overflow:hidden never clips it */}
       {pendingConnection && (
         <div
           style={{
-            position: "absolute",
-            // Sheet is 320px wide, 8px margin from edges
-            left: Math.min(Math.max(pendingConnection.screenX - 160, 8), (typeof window !== "undefined" ? window.innerWidth : 800) - 328),
-            // Position sheet above the midpoint; if too close to top, flip below
-            top: pendingConnection.screenY > 220
-              ? pendingConnection.screenY - 230
-              : pendingConnection.screenY + 30,
-            zIndex: 50,
+            position: "fixed",
+            // Sheet is ~320px wide; clamp with 12px margins from viewport edges
+            left: Math.min(
+              Math.max(pendingConnection.screenX - 160, 12),
+              window.innerWidth - 332
+            ),
+            // Prefer above midpoint; flip below if too close to top
+            top: pendingConnection.screenY > 240
+              ? pendingConnection.screenY - 240
+              : pendingConnection.screenY + 24,
+            zIndex: 9999,
           }}
         >
           <ConnectorPreviewSheet
