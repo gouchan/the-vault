@@ -3,19 +3,19 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #232323;
+  --background: #1E1E1E;
   --foreground: #e8e8e8;
   --card: #444444;
   --card-foreground: #e8e8e8;
-  --popover: #3a3a3a;
+  --popover: #2C2C2C;
   --popover-foreground: #e8e8e8;
   --primary: #d4d4d4;
-  --primary-foreground: #232323;
-  --secondary: #3a3a3a;
+  --primary-foreground: #1E1E1E;
+  --secondary: #2C2C2C;
   --secondary-foreground: #e8e8e8;
-  --muted: #383838;
+  --muted: #2C2C2C;
   --muted-foreground: #999999;
-  --accent: #3a3a3a;
+  --accent: #2C2C2C;
   --accent-foreground: #e8e8e8;
   --destructive: #8b2020;
   --destructive-foreground: #e8e8e8;
@@ -27,7 +27,7 @@
   --sticky-yellow-dark: #E6C84D;
   --sticky-yellow-bg: #2a2610;
   --sticky-yellow-border: #4d4520;
-  --sticky-yellow-fg: #232323;
+  --sticky-yellow-fg: #1E1E1E;
   --pin-active: #FFE066;
 }
 
@@ -77,7 +77,7 @@ body {
 
 :root {
   --dot-color: rgba(255, 255, 255, 0.07);
-  --canvas-bg: #282828;
+  --canvas-bg: #1E1E1E;
   --canvas-dot: #4a4a4a;
 }
 
@@ -163,7 +163,7 @@ body {
   --color-card: #444444;
   --color-text: #e8e8e8;
   --color-border: #505050;
-  --color-muted: #3a3a3a;
+  --color-muted: #2C2C2C;
   --color-muted-fg: #999999;
   --color-note-bg: #2a2610;
   --color-note-border: #4d4520;
