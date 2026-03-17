@@ -13,9 +13,11 @@ import { BlockForm } from "@/components/forms/BlockForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Block, BlockType, CanvasPosition } from "@/types/block";
-import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight, Loader2 } from "lucide-react";
 import type { Editor } from "@tldraw/tldraw";
 import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
+import { createBlock } from "@/lib/actions/blocks";
+import { isValidUrl, normalizeUrl, detectMediaType } from "@/lib/utils/url-parser";
 
 // Dynamic import — tldraw must not be SSR'd
 const TldrawCanvas = dynamic(
@@ -41,6 +43,8 @@ export default function BoardPage() {
   const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [tldrawEditor, setTldrawEditor] = useState<Editor | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlLoading, setUrlLoading] = useState(false);
 
   const loadBoard = useCallback(async () => {
     try {
@@ -86,6 +90,43 @@ export default function BoardPage() {
     }
     setCreateType(null);
     loadBoard();
+  }
+
+  async function handleUrlQuickAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = urlInput.trim();
+    if (!trimmed || urlLoading) return;
+    const normalized = normalizeUrl(trimmed);
+    if (!isValidUrl(normalized)) return;
+
+    setUrlLoading(true);
+    try {
+      const mediaType = detectMediaType(normalized);
+      let ogData: { title?: string | null; description?: string | null; image?: string | null } = {};
+      try {
+        const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(normalized)}`);
+        if (res.ok) ogData = await res.json();
+      } catch {}
+
+      const block = await createBlock({
+        type: "reference",
+        url: normalized,
+        media_type: mediaType,
+        title: ogData.title || null,
+        og_title: ogData.title || null,
+        og_description: ogData.description || null,
+        og_image: ogData.image || null,
+        thumbnail_url: ogData.image || null,
+      });
+      await addBlockToBoard(boardId, block.id);
+      setUrlInput("");
+      setAddDialogOpen(false);
+      loadBoard();
+    } catch (err) {
+      console.error("Failed to add URL:", err);
+    } finally {
+      setUrlLoading(false);
+    }
   }
 
   async function handleImageUpload() {
@@ -230,7 +271,27 @@ export default function BoardPage() {
             <DialogTitle>Add Bead to Garland</DialogTitle>
           </DialogHeader>
 
-          <div className="flex gap-2 mt-2">
+          {/* URL quick-add */}
+          <form onSubmit={handleUrlQuickAdd} className="flex gap-2 mt-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Paste a URL to add a link bead..."
+                disabled={urlLoading}
+                className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--ring)] disabled:opacity-50 pr-8"
+              />
+              {urlLoading && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-[var(--muted-foreground)]" />
+              )}
+            </div>
+            <Button type="submit" size="sm" disabled={!urlInput.trim() || urlLoading} className="shrink-0">
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </form>
+
+          <div className="flex gap-2 mt-3">
             <Button variant="outline" size="sm" onClick={() => handleCreateAndAdd("person")} className="text-xs">
               <User className="mr-1 h-3 w-3" /> New Person
             </Button>

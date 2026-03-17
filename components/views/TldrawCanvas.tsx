@@ -23,6 +23,7 @@ import {
 } from "@/lib/actions/tldraw";
 import { createBlock } from "@/lib/actions/blocks";
 import { addBlockToBoard } from "@/lib/actions/boards";
+import { detectMediaType, isValidUrl, normalizeUrl } from "@/lib/utils/url-parser";
 import {
   getConnectorPreview,
   syncSelectedFields as syncSelectedFieldsAction,
@@ -253,6 +254,62 @@ export function TldrawCanvas({
     setToastMessage("Connected");
     toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2000);
   }
+
+  // ── Drop/paste URL → fetch OG → create block → add shape ────
+  const handleUrlDrop = useCallback(
+    async (url: string, editor: Editor, x: number, y: number) => {
+      const normalized = normalizeUrl(url);
+      if (!isValidUrl(normalized)) return;
+
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      setToastMessage("Fetching link...");
+
+      try {
+        const mediaType = detectMediaType(normalized);
+        let ogData: { title?: string | null; description?: string | null; image?: string | null } = {};
+        try {
+          const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(normalized)}`);
+          if (res.ok) ogData = await res.json();
+        } catch {}
+
+        const block = await createBlock({
+          type: "reference",
+          url: normalized,
+          media_type: mediaType,
+          title: ogData.title || null,
+          og_title: ogData.title || null,
+          og_description: ogData.description || null,
+          og_image: ogData.image || null,
+          thumbnail_url: ogData.image || null,
+        });
+
+        await addBlockToBoard(boardId, block.id);
+
+        const pagePoint = editor.screenToPage({ x, y });
+        const id = createShapeId(`vault-${block.id}`);
+        editor.createShapes([{
+          id,
+          type: "vault-block",
+          x: pagePoint.x - 140,
+          y: pagePoint.y - 110,
+          props: {
+            w: 280,
+            h: ogData.image ? 220 : 100,
+            ...blockToShapeProps(block),
+          },
+        }]);
+
+        onBlocksChanged?.();
+        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+        setToastMessage("Link added");
+        toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2000);
+      } catch (err) {
+        console.error("URL drop error:", err);
+        setToastMessage(null);
+      }
+    },
+    [boardId, onBlocksChanged]
+  );
 
   // ── Upload file → create block → add shape ──────────────────
   const handleFileUpload = useCallback(
@@ -599,7 +656,7 @@ export function TldrawCanvas({
     };
   }, [boardId]);
 
-  // ── Drop handler for files ───────────────────────────────────
+  // ── Drop handler for files and URLs ─────────────────────────
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -607,11 +664,22 @@ export function TldrawCanvas({
       if (!editor) return;
 
       const files = Array.from(e.dataTransfer.files);
-      files.forEach((file) => {
-        handleFileUpload(file, editor, e.clientX, e.clientY);
-      });
+      if (files.length > 0) {
+        files.forEach((file) => {
+          handleFileUpload(file, editor, e.clientX, e.clientY);
+        });
+        return;
+      }
+
+      // Handle URL drops (browser address bar drag, link drag, etc.)
+      const uriList = e.dataTransfer.getData("text/uri-list");
+      const textPlain = e.dataTransfer.getData("text/plain");
+      const droppedUrl = (uriList || textPlain).trim().split("\n")[0].trim();
+      if (droppedUrl && isValidUrl(droppedUrl)) {
+        handleUrlDrop(droppedUrl, editor, e.clientX, e.clientY);
+      }
     },
-    [handleFileUpload]
+    [handleFileUpload, handleUrlDrop]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -619,13 +687,15 @@ export function TldrawCanvas({
     e.dataTransfer.dropEffect = "copy";
   }, []);
 
-  // ── Paste handler for images ─────────────────────────────────
+  // ── Paste handler for images and URLs ───────────────────────
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const editor = editorRef.current;
       if (!editor) return;
 
       const items = Array.from(e.clipboardData?.items || []);
+
+      // Images take priority
       for (const item of items) {
         if (item.type.startsWith("image/")) {
           e.preventDefault();
@@ -634,14 +704,27 @@ export function TldrawCanvas({
             const center = editor.getViewportScreenCenter();
             handleFileUpload(file, editor, center.x, center.y);
           }
-          break;
+          return;
         }
+      }
+
+      // URL text paste
+      const textItem = items.find((i) => i.type === "text/plain" || i.type === "text/uri-list");
+      if (textItem) {
+        textItem.getAsString((text) => {
+          const trimmed = text.trim().split("\n")[0].trim();
+          if (isValidUrl(trimmed)) {
+            e.preventDefault();
+            const center = editor.getViewportScreenCenter();
+            handleUrlDrop(trimmed, editor, center.x, center.y);
+          }
+        });
       }
     };
 
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, [handleFileUpload]);
+  }, [handleFileUpload, handleUrlDrop]);
 
   return (
     <div

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { createBlock, updateBlock } from "@/lib/actions/blocks";
 import type { Block, BlockType } from "@/types/block";
+import { isValidUrl, normalizeUrl, detectMediaType } from "@/lib/utils/url-parser";
 
 interface BlockFormProps {
   type: BlockType;
@@ -18,6 +19,8 @@ interface BlockFormProps {
 export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
   const isEdit = !!block;
   const [loading, setLoading] = useState(false);
+  const [ogLoading, setOgLoading] = useState(false);
+  const [ogImage, setOgImage] = useState(block?.og_image || block?.thumbnail_url || "");
   const [form, setForm] = useState({
     title: block?.title || "",
     description: block?.description || "",
@@ -31,11 +34,47 @@ export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
     avatar_url: block?.avatar_url || "",
     // Reference
     url: block?.url || "",
+    og_title: block?.og_title || "",
+    og_description: block?.og_description || "",
+    og_image: block?.og_image || "",
+    thumbnail_url: block?.thumbnail_url || "",
+    media_type: block?.media_type || "",
     // Prompt
     content: block?.content || "",
     // Tags
     tagString: block?.tags?.map((t) => t.name).join(", ") || "",
   });
+
+  async function handleUrlBlur() {
+    if (!form.url || isEdit) return;
+    const normalized = normalizeUrl(form.url);
+    if (!isValidUrl(normalized)) return;
+    // Skip if we already have OG data
+    if (form.og_title || form.og_image) return;
+
+    setOgLoading(true);
+    try {
+      const mediaType = detectMediaType(normalized);
+      let ogData: { title?: string | null; description?: string | null; image?: string | null } = {};
+      const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(normalized)}`);
+      if (res.ok) ogData = await res.json();
+
+      setForm((f) => ({
+        ...f,
+        url: normalized,
+        media_type: mediaType,
+        title: f.title || ogData.title || "",
+        og_title: ogData.title || "",
+        og_description: ogData.description || "",
+        og_image: ogData.image || "",
+        thumbnail_url: ogData.image || "",
+      }));
+      setOgImage(ogData.image || "");
+    } catch {}
+    finally {
+      setOgLoading(false);
+    }
+  }
 
   function set(key: string, val: string) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -68,7 +107,12 @@ export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
     }
 
     if (type === "reference") {
-      data.url = form.url || null;
+      data.url = form.url ? normalizeUrl(form.url) : null;
+      data.media_type = form.media_type || null;
+      data.og_title = form.og_title || null;
+      data.og_description = form.og_description || null;
+      data.og_image = form.og_image || null;
+      data.thumbnail_url = form.thumbnail_url || null;
     }
 
     if (type === "note" || type === "prompt") {
@@ -137,9 +181,24 @@ export function BlockForm({ type, block, onSaved, onCancel }: BlockFormProps) {
 
       {/* Reference fields */}
       {type === "reference" && (
-        <div>
+        <div className="space-y-2">
           <label className="text-xs font-medium text-[var(--muted-foreground)]">URL</label>
-          <Input value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://..." />
+          <div className="relative">
+            <Input
+              value={form.url}
+              onChange={(e) => set("url", e.target.value)}
+              onBlur={handleUrlBlur}
+              placeholder="https://..."
+            />
+            {ogLoading && (
+              <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-[var(--muted-foreground)]" />
+            )}
+          </div>
+          {ogImage && (
+            <div className="overflow-hidden rounded border border-[var(--border)] aspect-video bg-[var(--secondary)]">
+              <img src={ogImage} alt="" className="h-full w-full object-cover" />
+            </div>
+          )}
         </div>
       )}
 
