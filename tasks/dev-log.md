@@ -1,5 +1,47 @@
 # Rosary — Dev Log
 
+## 2026-03-18 — Phase I shipped
+
+### Vision locked
+Personal blackboard in the spirit of Pinterest (visual, image-heavy) + Are.na (intentional collecting with connections). Personal-first; profiles/teams on the roadmap for Phase II.
+
+### Dark mode tokens
+Dark mode confirmed at `#1E1E1E` base, `#2C2C2C` accents (done prior session, confirmed today).
+
+### OG image fix
+`/api/og-fetch` now resolves relative `og:image` URLs against the page's base URL (e.g. `/images/og.jpg` → `https://example.com/images/og.jpg`). Also handles protocol-relative `//...` URLs.
+- **File:** `app/api/og-fetch/route.ts` — `resolveUrl()` helper added
+
+### Pinterest-style ReferenceCard
+Full redesign of `ReferenceCard`:
+- Image fills the entire card (no fixed aspect-ratio wrapper — natural image height)
+- Hover: gradient overlay reveals title, favicon (Google S2), external-link button
+- No image → text card with favicon + title + description + hostname
+- Broken image → falls through to text card via `onError` → `setImgError(true)`
+- **File:** `components/blocks/ReferenceCard.tsx`
+
+### Lightbox
+Click any image card → full-screen viewer:
+- `position: fixed`, `z-index: 9999`, black/90 + blur backdrop
+- Top bar: favicon, title, open-original link, close button
+- Esc key closes; click outside image closes
+- `document.body.style.overflow = "hidden"` while open
+- **File:** `components/ui/lightbox.tsx` (new)
+
+### Masonry grid tightened
+- Columns: 5 (default) → 4 (1536px) → 3 (1280px) → 2 (768px) → 1 (480px)
+- Gutter reduced: 16px → 10px (more pins per row, tighter Pinterest feel)
+- **Files:** `components/views/GridView.tsx`, `app/globals.css`
+
+### Profile foundation
+- `supabase/profiles.sql` — `profiles` table with username, display_name, bio, avatar_url, cover_url, social links; seed row `username='me'`
+- `lib/actions/profiles.ts` — `getProfile(username)`, `upsertProfile(data)` server actions
+- `app/profile/page.tsx` — profile page with cover photo, avatar, display name, bio, social links, inline edit mode
+- Sidebar: added Profile nav item (User icon → `/profile`)
+- **Note:** Run `supabase/profiles.sql` in Supabase dashboard to activate
+
+---
+
 ## 2026-02-26
 
 ### Dark mode background nudge
