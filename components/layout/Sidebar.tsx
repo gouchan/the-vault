@@ -19,6 +19,7 @@ import {
   GripVertical,
   HelpCircle,
   Trash2,
+  User,
 } from "lucide-react";
 import { HelpModal } from "./HelpModal";
 import { useTheme } from "next-themes";
@@ -160,6 +161,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/search", icon: Search, label: "Search" },
+    { href: "/profile", icon: User, label: "Profile" },
   ];
 
   // ── Collapsed state ────────────────────────────────────────

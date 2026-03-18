@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
 
     const title = extractMeta(html, "og:title") || extractTitle(html);
     const description = extractMeta(html, "og:description") || extractMeta(html, "description");
-    const image = extractMeta(html, "og:image");
+    const rawImage = extractMeta(html, "og:image");
+    const image = resolveUrl(rawImage, url);
 
     return NextResponse.json({ title, description, image });
   } catch {
@@ -55,4 +56,18 @@ function extractMeta(html: string, property: string): string | null {
 function extractTitle(html: string): string | null {
   const match = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   return match ? match[1].trim() : null;
+}
+
+function resolveUrl(imageUrl: string | null, baseUrl: string): string | null {
+  if (!imageUrl) return null;
+  try {
+    // Already absolute
+    if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+    // Protocol-relative
+    if (imageUrl.startsWith("//")) return `https:${imageUrl}`;
+    // Relative — resolve against base
+    return new URL(imageUrl, baseUrl).href;
+  } catch {
+    return null;
+  }
 }

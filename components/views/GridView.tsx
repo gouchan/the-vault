@@ -5,10 +5,11 @@ import { BlockCard } from "@/components/blocks/BlockCard";
 import type { Block } from "@/types/block";
 
 const breakpointColumns = {
-  default: 4,
+  default: 5,
+  1536: 4,
   1280: 3,
-  1024: 2,
-  640: 1,
+  768: 2,
+  480: 1,
 };
 
 export function GridView({
