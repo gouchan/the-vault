@@ -112,9 +112,14 @@ function ReferenceMedia({
 
   const showImage = (thumbnailUrl || fetchedImage || youtubeId || isImage) && !imgError;
 
+  const handleOpenUrl = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (url) window.open(url, "_blank", "noopener");
+  }, [url]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {showImage && (
+      {showImage ? (
         <div
           style={{
             flex: 1,
@@ -122,9 +127,9 @@ function ReferenceMedia({
             overflow: "hidden",
             background: "var(--color-muted, #1c1c22)",
             position: "relative",
-            cursor: isGif ? "pointer" : isVideo ? "pointer" : "default",
+            cursor: isGif ? "pointer" : isVideo ? "pointer" : url ? "pointer" : "default",
           }}
-          onClick={isGif ? handleGifClick : isVideo ? handleVideoClick : undefined}
+          onClick={isGif ? handleGifClick : isVideo ? handleVideoClick : url ? handleOpenUrl : undefined}
         >
           <img
             ref={imgRef}
@@ -213,10 +218,32 @@ function ReferenceMedia({
               </div>
             </div>
           )}
+
+          {/* External link badge (top-right) */}
+          {url && !isGif && !isVideo && (
+            <div
+              style={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                background: "rgba(0,0,0,0.6)",
+                borderRadius: "4px",
+                padding: "3px 5px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </div>
+          )}
         </div>
-      )}
-      {/* Fallback when image fails — Pinterest-style text card */}
-      {imgError && (thumbnailUrl || isImage) && (
+      ) : (
+        /* No image — favicon + title card with clickable link */
         <div
           style={{
             flex: 1,
@@ -225,27 +252,38 @@ function ReferenceMedia({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px",
+            gap: "10px",
             background: "var(--color-muted, #1c1c22)",
             padding: "16px",
+            cursor: url ? "pointer" : "default",
           }}
+          onClick={url ? handleOpenUrl : undefined}
         >
           {faviconUrl && (
-            <img src={faviconUrl} alt="" style={{ width: 24, height: 24, borderRadius: "4px" }} />
+            <img src={faviconUrl} alt="" style={{ width: 32, height: 32, borderRadius: "6px" }} />
           )}
-          <div
-            style={{
-              fontSize: "11px",
-              color: "var(--color-muted-fg, #71717a)",
-              textAlign: "center",
-              wordBreak: "break-word",
-            }}
-          >
-            {hostname || "Link"}
-          </div>
+          {!faviconUrl && (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted-fg, #71717a)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          {url && (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted-fg, #71717a)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              <span style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)" }}>
+                {hostname}
+              </span>
+            </div>
+          )}
         </div>
       )}
-      <div style={{ padding: "8px 10px", flexShrink: 0 }}>
+      <div style={{ padding: "8px 10px", flexShrink: 0, borderTop: "1px solid var(--color-border, #27272a)" }}>
         <div
           style={{
             fontSize: "12px",
@@ -258,8 +296,29 @@ function ReferenceMedia({
           {title || hostname || "Untitled"}
         </div>
         {url && (
-          <div style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)", marginTop: "2px" }}>
-            {hostname || url}
+          <div
+            style={{
+              fontSize: "10px",
+              color: "var(--color-muted-fg, #71717a)",
+              marginTop: "2px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+            }}
+            onClick={handleOpenUrl}
+          >
+            {faviconUrl && (
+              <img src={faviconUrl} alt="" style={{ width: 12, height: 12, borderRadius: "2px" }} />
+            )}
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {hostname || url}
+            </span>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
           </div>
         )}
       </div>
