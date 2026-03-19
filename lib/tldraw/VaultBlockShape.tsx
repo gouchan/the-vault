@@ -29,9 +29,26 @@ function ReferenceMedia({
 }) {
   const [gifPaused, setGifPaused] = useState(false);
   const [staticFrame, setStaticFrame] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
+  const [fetchedImage, setFetchedImage] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const gifSrc = thumbnailUrl || url || "";
+  // Lazy OG re-fetch: if shape has a URL but no thumbnail, try to get one
+  useEffect(() => {
+    if (thumbnailUrl || !url || isImage || youtubeId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(url)}`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (data.image && !cancelled) setFetchedImage(data.image);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [url, thumbnailUrl, isImage, youtubeId]);
+
+  const gifSrc = thumbnailUrl || fetchedImage || url || "";
 
   // Capture the first frame of a GIF for the paused state
   const captureStaticFrame = useCallback(() => {
@@ -75,6 +92,7 @@ function ReferenceMedia({
 
   const rawImageSrc =
     thumbnailUrl ||
+    fetchedImage ||
     (isImage ? url : "") ||
     (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "");
 
@@ -85,9 +103,18 @@ function ReferenceMedia({
 
   const displaySrc = isGif && gifPaused && staticFrame ? staticFrame : imageSrc;
 
+  // Derive hostname + favicon for fallback
+  let hostname = "";
+  try { hostname = new URL(url).hostname; } catch {}
+  const faviconUrl = hostname
+    ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
+    : "";
+
+  const showImage = (thumbnailUrl || fetchedImage || youtubeId || isImage) && !imgError;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {(thumbnailUrl || youtubeId || isImage) && (
+      {showImage && (
         <div
           style={{
             flex: 1,
@@ -104,6 +131,7 @@ function ReferenceMedia({
             src={displaySrc}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={() => setImgError(true)}
           />
 
           {/* GIF badge + pause/play indicator */}
@@ -187,6 +215,36 @@ function ReferenceMedia({
           )}
         </div>
       )}
+      {/* Fallback when image fails — Pinterest-style text card */}
+      {imgError && (thumbnailUrl || isImage) && (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            background: "var(--color-muted, #1c1c22)",
+            padding: "16px",
+          }}
+        >
+          {faviconUrl && (
+            <img src={faviconUrl} alt="" style={{ width: 24, height: 24, borderRadius: "4px" }} />
+          )}
+          <div
+            style={{
+              fontSize: "11px",
+              color: "var(--color-muted-fg, #71717a)",
+              textAlign: "center",
+              wordBreak: "break-word",
+            }}
+          >
+            {hostname || "Link"}
+          </div>
+        </div>
+      )}
       <div style={{ padding: "8px 10px", flexShrink: 0 }}>
         <div
           style={{
@@ -197,11 +255,11 @@ function ReferenceMedia({
             whiteSpace: "nowrap",
           }}
         >
-          {title || (() => { try { return new URL(url).hostname; } catch { return "Untitled"; } })()}
+          {title || hostname || "Untitled"}
         </div>
         {url && (
           <div style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)", marginTop: "2px" }}>
-            {(() => { try { return new URL(url).hostname; } catch { return url; } })()}
+            {hostname || url}
           </div>
         )}
       </div>
