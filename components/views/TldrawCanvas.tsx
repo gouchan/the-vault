@@ -512,6 +512,24 @@ export function TldrawCanvas({
         }
       });
 
+      // ── Prevent tldraw from creating built-in bookmark shapes ──
+      // Override the external content handler so tldraw never creates
+      // its own bookmark/embed shapes — we handle all URLs ourselves.
+      editor.registerExternalContentHandler("url", async (info) => {
+        const center = editor.getViewportScreenCenter();
+        handleUrlDrop(info.url, editor, center.x, center.y);
+      });
+      editor.registerExternalContentHandler("text", async (info) => {
+        const text = info.text.trim();
+        if (isValidUrl(text)) {
+          const center = editor.getViewportScreenCenter();
+          handleUrlDrop(text, editor, center.x, center.y);
+          return;
+        }
+        // For non-URL text, let it become a default text shape
+        // (do nothing — tldraw handles it)
+      });
+
       // ── Double-click to open block ───────────────────────────
       editor.on("event", (event) => {
         if (event.name === "double_click" && event.phase === "up") {
@@ -708,17 +726,16 @@ export function TldrawCanvas({
         }
       }
 
-      // URL text paste
-      const textItem = items.find((i) => i.type === "text/plain" || i.type === "text/uri-list");
-      if (textItem) {
-        textItem.getAsString((text) => {
-          const trimmed = text.trim().split("\n")[0].trim();
-          if (isValidUrl(trimmed)) {
-            e.preventDefault();
-            const center = editor.getViewportScreenCenter();
-            handleUrlDrop(trimmed, editor, center.x, center.y);
-          }
-        });
+      // URL text paste — we must preventDefault SYNCHRONOUSLY before tldraw
+      // can intercept the paste and create its own bookmark shape.
+      // Read the text from clipboardData directly (sync) to check if it's a URL.
+      const pastedText = e.clipboardData?.getData("text/plain") || e.clipboardData?.getData("text/uri-list") || "";
+      const trimmedUrl = pastedText.trim().split("\n")[0].trim();
+      if (trimmedUrl && isValidUrl(trimmedUrl)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const center = editor.getViewportScreenCenter();
+        handleUrlDrop(trimmedUrl, editor, center.x, center.y);
       }
     };
 
