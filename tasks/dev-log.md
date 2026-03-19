@@ -1,5 +1,36 @@
 # Rosary — Dev Log
 
+## 2026-03-19 — Image proxy + canvas UX fixes
+
+### Image proxy (`/api/img-proxy`)
+- New endpoint fetches external images server-side and pipes them back with 24hr cache headers
+- SSRF-guarded: only `http/https`, only image content-types allowed
+- Solves hotlink protection, CORS redirect chains, auth-gated hosts (GitHub, Twitter, etc.)
+- **File:** `app/api/img-proxy/route.ts` (new)
+
+### OG fetch now stores proxied URLs
+- `og-fetch` returns `/api/img-proxy?url=...` instead of raw external URLs
+- All **new beads** get a proxied thumbnail from day one
+- **File:** `app/api/og-fetch/route.ts`
+
+### VaultBlockShape: proxy layer + clickable links
+- **Old beads** (raw external `thumbnailUrl`) are rewritten through proxy at render time — no DB migration needed
+- Click image area or hostname row → opens URL in new tab
+- No-image fallback: 32px favicon + hostname + ↗ icon, entire area clickable
+- External-link badge (top-right corner) on image shapes
+- Bottom bar: favicon + hostname + ↗ always clickable
+- **File:** `lib/tldraw/VaultBlockShape.tsx`
+
+### Verified end-to-end (live, in-browser)
+- `og-fetch` → GitHub, Stripe, Wikipedia: all return proxied URLs ✅
+- `img-proxy` → GitHub avatar: `200 OK, image/png` ✅
+- In-browser fetch chain: 1561 bytes delivered ✅
+- New Next.js bead (grid view): OG image renders with logo ✅
+- Canvas screenshot bead: image loads via proxy (2430×1534) ✅
+- Google Docs / Descript: favicon fallback (correct — no OG image exists) ✅
+
+---
+
 ## 2026-03-18 — Phase I shipped
 
 ### Vision locked
