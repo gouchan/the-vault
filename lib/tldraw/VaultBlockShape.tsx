@@ -73,10 +73,15 @@ function ReferenceMedia({
     [url]
   );
 
-  const imageSrc =
+  const rawImageSrc =
     thumbnailUrl ||
     (isImage ? url : "") ||
     (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "");
+
+  // Proxy external URLs so hotlink-protected images load (YouTube thumbnails are fine unproxied)
+  const imageSrc = rawImageSrc && !rawImageSrc.startsWith("/") && !youtubeId
+    ? `/api/img-proxy?url=${encodeURIComponent(rawImageSrc)}`
+    : rawImageSrc;
 
   const displaySrc = isGif && gifPaused && staticFrame ? staticFrame : imageSrc;
 

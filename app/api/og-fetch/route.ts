@@ -23,7 +23,11 @@ export async function GET(req: NextRequest) {
     const title = extractMeta(html, "og:title") || extractTitle(html);
     const description = extractMeta(html, "og:description") || extractMeta(html, "description");
     const rawImage = extractMeta(html, "og:image");
-    const image = resolveUrl(rawImage, url);
+    const resolvedImage = resolveUrl(rawImage, url);
+    // Proxy through our own endpoint so hotlink-protected and CORS-blocked images load in tldraw
+    const image = resolvedImage
+      ? `/api/img-proxy?url=${encodeURIComponent(resolvedImage)}`
+      : null;
 
     return NextResponse.json({ title, description, image });
   } catch {
