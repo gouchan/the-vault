@@ -530,6 +530,15 @@ export function TldrawCanvas({
         // (do nothing — tldraw handles it)
       });
 
+      // ── Intercept file drops → upload as vault-block image ────
+      editor.registerExternalContentHandler("files", async (info) => {
+        const images = info.files.filter((f: File) => f.type.startsWith("image/"));
+        for (const file of images) {
+          const center = editor.getViewportScreenCenter();
+          await handleFileUpload(file, editor, center.x, center.y);
+        }
+      });
+
       // ── Double-click to open block ───────────────────────────
       editor.on("event", (event) => {
         if (event.name === "double_click" && event.phase === "up") {
@@ -547,7 +556,7 @@ export function TldrawCanvas({
         saveHistoryIfChanged(editor);
       }, HISTORY_INTERVAL_MS);
     },
-    [initializeEditor, debouncedSave, handleArrowBinding, onBlockClick, onEditorReady, saveHistoryIfChanged]
+    [initializeEditor, debouncedSave, handleArrowBinding, handleFileUpload, onBlockClick, onEditorReady, saveHistoryIfChanged]
   );
 
   // ── Sync blocks prop changes into tldraw ─────────────────────

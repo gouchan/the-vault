@@ -8,12 +8,14 @@ import { getBlocks } from "@/lib/actions/blocks";
 import { addBlockToBoard } from "@/lib/actions/boards";
 import { getCanvasPositions } from "@/lib/actions/canvas";
 import { GridView } from "@/components/views/GridView";
+import { ChannelGrid } from "@/components/views/ChannelGrid";
 import { HistoryTimeline } from "@/components/views/HistoryTimeline";
 import { BlockForm } from "@/components/forms/BlockForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Block, BlockType, CanvasPosition } from "@/types/block";
-import { Grid3x3, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight, Loader2 } from "lucide-react";
+import { Grid3x3, LayoutGrid, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight, Loader2 } from "lucide-react";
+import { DropZone } from "@/components/ui/drop-zone";
 import type { Editor } from "@tldraw/tldraw";
 import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
 import { createBlock } from "@/lib/actions/blocks";
@@ -34,7 +36,7 @@ export default function BoardPage() {
   const router = useRouter();
   const boardId = params.id as string;
   const [board, setBoard] = useState<Block | null>(null);
-  const [view, setView] = useState<"grid" | "canvas">("canvas"); // Default to canvas
+  const [view, setView] = useState<"grid" | "channel" | "canvas">("canvas"); // Default to canvas
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [createType, setCreateType] = useState<BlockType | null>(null);
   const [allBlocks, setAllBlocks] = useState<Block[]>([]);
@@ -202,9 +204,18 @@ export default function BoardPage() {
               size="icon"
               className="h-8 w-8 rounded-r-none"
               onClick={() => setView("grid")}
-              title="Grid view"
+              title="Masonry grid view"
             >
               <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={view === "channel" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-none border-x border-[var(--border)]"
+              onClick={() => setView("channel")}
+              title="Channel view"
+            >
+              <LayoutGrid className="h-4 w-4" />
             </Button>
             <Button
               variant={view === "canvas" ? "secondary" : "ghost"}
@@ -225,13 +236,25 @@ export default function BoardPage() {
 
       {/* View */}
       {view === "grid" ? (
-        <GridView
-          blocks={board.children || []}
-          onBlockClick={(block) => {
-            if (block.type === "board") router.push(`/board/${block.id}`);
-            else router.push(`/block/${block.id}`);
-          }}
-        />
+        <DropZone boardId={boardId} onUploaded={loadBoard}>
+          <GridView
+            blocks={board.children || []}
+            onBlockClick={(block) => {
+              if (block.type === "board") router.push(`/board/${block.id}`);
+              else router.push(`/block/${block.id}`);
+            }}
+          />
+        </DropZone>
+      ) : view === "channel" ? (
+        <DropZone boardId={boardId} onUploaded={loadBoard}>
+          <ChannelGrid
+            blocks={board.children || []}
+            onBlockClick={(block) => {
+              if (block.type === "board") router.push(`/board/${block.id}`);
+              else router.push(`/block/${block.id}`);
+            }}
+          />
+        </DropZone>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 px-4 pb-2">
           <div className="min-h-0" style={{ flex: "1 1 0%" }}>

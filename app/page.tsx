@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import type { Block, BlockType } from "@/types/block";
 import { User, Link2, FileText, Filter, Loader2, Image as ImageIcon } from "lucide-react";
 import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
+import { DropZone } from "@/components/ui/drop-zone";
 
 const PAGE_SIZE = 20;
 
@@ -193,7 +194,7 @@ export default function HomePage() {
           ))}
         </div>
       ) : (
-        <>
+        <DropZone onUploaded={loadBlocks}>
           <GridView blocks={blocks} onBlockClick={handleBlockClick} />
           {hasMore && (
             <div className="mt-6 flex justify-center">
@@ -215,7 +216,7 @@ export default function HomePage() {
               </Button>
             </div>
           )}
-        </>
+        </DropZone>
       )}
 
       {/* Detail Panel */}
