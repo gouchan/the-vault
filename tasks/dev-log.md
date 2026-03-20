@@ -1,5 +1,34 @@
 # Rosary — Dev Log
 
+## 2026-03-20 — Phase II: NoteCard, ChannelGrid, drag-drop, canvas file drops
+
+### NoteCard component
+- New `NoteCard.tsx` — are.na-style text card: title, content preview (line-clamp-8), tags, "Note" type indicator at bottom
+- `BlockCard` now routes `"note"` → `NoteCard`, keeps `"prompt"` → `PromptCard`
+- **Files:** `components/blocks/NoteCard.tsx` (new), `components/blocks/BlockCard.tsx`
+
+### ChannelGrid (are.na-style uniform grid)
+- New `ChannelGrid.tsx` — fixed square-aspect cards (4→3→2→1 responsive columns)
+- Each card: image fill, text preview for notes, icon fallback for empty blocks
+- Block type badge (bottom-left): `Link2`, `FileText`, `User`, `Layers` by type
+- Title + hostname rendered below card (are.na style)
+- Board page now has 3-way view toggle: Masonry (Grid3x3) | Channel (LayoutGrid) | Canvas (Pencil)
+- **Files:** `components/views/ChannelGrid.tsx` (new), `app/board/[id]/page.tsx`
+
+### Drag-drop image upload (DropZone)
+- New `DropZone` wrapper component: drag image files over grid/channel views → upload overlay → Supabase Storage → creates reference blocks
+- Handles multi-file drops, 10MB limit, loading spinner
+- Wired into HomePage grid and BoardPage (grid + channel views)
+- **Files:** `components/ui/drop-zone.tsx` (new), `app/page.tsx`, `app/board/[id]/page.tsx`
+
+### Canvas file drop support
+- `handleFileUpload` existed but was never registered with tldraw
+- Added `registerExternalContentHandler("files", ...)` in `handleMount` callback
+- Drop image files directly onto tldraw canvas → upload → creates vault-block shape at drop point
+- **File:** `components/views/TldrawCanvas.tsx`
+
+---
+
 ## 2026-03-19 — Image proxy + canvas UX fixes
 
 ### Image proxy (`/api/img-proxy`)
