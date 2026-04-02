@@ -335,6 +335,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         fill={board.pinned ? "var(--sticky-yellow)" : "none"}
                       />
                     </button>
+                    {/* Cover thumbnail */}
+                    {(board as any).cover_url && (
+                      <img
+                        src={(board as any).cover_url}
+                        alt=""
+                        className="h-5 w-5 rounded object-cover flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
                     <span className="truncate flex-1">{board.title || "Untitled"}</span>
                     {/* Delete — hover reveal, far right */}
                     <button

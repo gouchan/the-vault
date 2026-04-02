@@ -13,10 +13,37 @@ export async function getBoards() {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data || []).map((b: any) => ({
+
+  const boards = (data || []).map((b: any) => ({
     ...b,
     _count: { children: b.block_connections?.[0]?.count || 0 },
   }));
+
+  // Fetch cover images: first child with a thumbnail for each board
+  if (boards.length > 0) {
+    const boardIds = boards.map((b: any) => b.id);
+    const { data: covers } = await sb
+      .from("block_connections")
+      .select("parent_id, blocks!block_connections_child_id_fkey(thumbnail_url, og_image)")
+      .in("parent_id", boardIds)
+      .eq("connection_type", "contains")
+      .order("sort_order");
+
+    // Build a map: boardId -> first image URL
+    const coverMap: Record<string, string> = {};
+    for (const c of covers || []) {
+      if (coverMap[c.parent_id]) continue; // already found one
+      const child = (c as any).blocks as any;
+      const url = child?.thumbnail_url || child?.og_image;
+      if (url) coverMap[c.parent_id] = url;
+    }
+
+    for (const board of boards) {
+      (board as any).cover_url = coverMap[board.id] || null;
+    }
+  }
+
+  return boards;
 }
 
 export async function getBoardWithBlocks(boardId: string) {
@@ -88,6 +115,13 @@ export async function removeBlockFromBoard(boardId: string, blockId: string) {
     .eq("connection_type", "contains");
 
   if (error) throw error;
+}
+
+export async function moveBlockToBoard(blockId: string, toBoardId: string, fromBoardId?: string) {
+  if (fromBoardId) {
+    await removeBlockFromBoard(fromBoardId, blockId);
+  }
+  await addBlockToBoard(toBoardId, blockId);
 }
 
 export async function getBoardsForBlock(blockId: string) {

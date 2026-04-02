@@ -35,7 +35,11 @@ import {
   Link2,
   FileText,
   ChevronRight,
+  LayoutGrid,
 } from "lucide-react";
+import { MoveToGarland } from "@/components/ui/move-to-garland";
+import { TagInput } from "@/components/ui/tag-input";
+import { getBoardsForBlock } from "@/lib/actions/boards";
 
 export default function BlockDetailPage() {
   const params = useParams();
@@ -49,11 +53,16 @@ export default function BlockDetailPage() {
   const [addExistingOpen, setAddExistingOpen] = useState(false);
   const [availableBlocks, setAvailableBlocks] = useState<Block[]>([]);
   const [selectedChild, setSelectedChild] = useState<Block | null>(null);
+  const [parentGarlands, setParentGarlands] = useState<{ id: string; title: string; type: string }[]>([]);
 
   const loadBlock = useCallback(async () => {
     try {
-      const data = await getBlockWithChildren(blockId);
+      const [data, garlands] = await Promise.all([
+        getBlockWithChildren(blockId),
+        getBoardsForBlock(blockId),
+      ]);
       setBlock(data);
+      setParentGarlands(garlands);
     } catch (err) {
       console.error(err);
     } finally {
@@ -211,14 +220,35 @@ export default function BlockDetailPage() {
               </a>
             )}
 
-            {/* Tags */}
-            {block.tags && block.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {block.tags.map((tag) => (
-                  <Badge key={tag.id} variant="secondary" className="text-xs">{tag.name}</Badge>
+            {/* Tags — interactive editor */}
+            <div className="mt-3">
+              <TagInput blockId={blockId} tags={block.tags || []} onTagsChanged={loadBlock} />
+            </div>
+
+            {/* Garland membership */}
+            {parentGarlands.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                <span className="text-xs text-[var(--muted-foreground)]">In:</span>
+                {parentGarlands.map((g) => (
+                  <Link
+                    key={g.id}
+                    href={`/board/${g.id}`}
+                    className="inline-flex items-center gap-1 rounded-full bg-[var(--secondary)] px-2 py-0.5 text-xs hover:bg-[var(--accent)] transition-colors"
+                  >
+                    <LayoutGrid className="h-2.5 w-2.5" />
+                    {g.title || "Untitled"}
+                  </Link>
                 ))}
               </div>
             )}
+
+            {/* Metadata */}
+            <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--muted-foreground)]">
+              <span>Created {new Date(block.created_at).toLocaleDateString()}</span>
+              {block.updated_at !== block.created_at && (
+                <span>Updated {new Date(block.updated_at).toLocaleDateString()}</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -230,6 +260,7 @@ export default function BlockDetailPage() {
           <Button variant="ghost" size="icon" onClick={() => setEditing(true)}>
             <Pencil className="h-4 w-4" />
           </Button>
+          <MoveToGarland blockId={blockId} onMoved={loadBlock} />
           <Button variant="ghost" size="icon" onClick={handleDelete}>
             <Trash2 className="h-4 w-4 text-red-400" />
           </Button>

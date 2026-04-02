@@ -1,5 +1,41 @@
 # Rosary — Dev Log
 
+## 2026-03-30 — Phase II.5: Command palette, garland covers, move-to, tagging, block detail polish
+
+### Command Palette upgrade (⌘K)
+- **URL auto-detect**: Type/paste a URL → "Add as link bead" action appears, fetches OG data inline (no `prompt()` dialogs)
+- **Quick note**: Non-URL text (3+ chars) → "Save as note" action creates note block instantly
+- **Garland targeting**: Row of garland pills below the input — select one to auto-add new blocks to that garland
+- **Fixed navigation**: All search results now navigate correctly (board → `/board/id`, others → `/block/id`)
+- **File:** `components/layout/CommandPalette.tsx`
+
+### Garland cover auto-thumbnail
+- `getBoards()` now fetches the first image-bearing child block for each garland
+- Sidebar shows a 20x20 rounded thumbnail next to garland name when a cover image exists
+- Graceful fallback: image errors are silently hidden
+- **Files:** `lib/actions/boards.ts`, `components/layout/Sidebar.tsx`
+
+### Block move between garlands
+- New `moveBlockToBoard(blockId, toBoardId, fromBoardId?)` server action
+- New `MoveToGarland` component: dropdown showing all garlands, check marks for current memberships
+- Integrated into block detail page action bar
+- **Files:** `lib/actions/boards.ts`, `components/ui/move-to-garland.tsx`, `app/block/[id]/page.tsx`
+
+### Block tagging UI
+- New `lib/actions/tags.ts` — full tag CRUD: getTags, createTag, deleteTag, updateTagColor, addTagToBlock, removeTagFromBlock, searchTags
+- New `TagInput` component: inline chip editor with autocomplete, keyboard nav, tag pills with color support
+- Replaced static tag badges on block detail page with interactive TagInput
+- **Files:** `lib/actions/tags.ts` (new), `components/ui/tag-input.tsx` (new), `app/block/[id]/page.tsx`
+
+### Block detail page improvements
+- Interactive tag editing (add/remove tags inline)
+- Garland membership badges with links ("In: Garland A, Garland B")
+- Created/updated date metadata
+- Move-to-garland action in toolbar
+- **File:** `app/block/[id]/page.tsx`
+
+---
+
 ## 2026-03-20 — Phase II: NoteCard, ChannelGrid, drag-drop, canvas file drops
 
 ### NoteCard component
