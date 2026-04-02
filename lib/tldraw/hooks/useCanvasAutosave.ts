@@ -18,6 +18,7 @@ export function useCanvasAutosave(boardId: string) {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const historyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const storeUnlistenRef = useRef<(() => void) | null>(null);
   const lastHistoryHashRef = useRef("");
   const hasChangedSinceHistoryRef = useRef(false);
   const previewActiveRef = useRef(false);
@@ -79,7 +80,7 @@ export function useCanvasAutosave(boardId: string) {
   const setupAutosave = useCallback(
     (editor: Editor, initializedRef: React.MutableRefObject<boolean>) => {
       // Listen for document changes from the user
-      editor.store.listen(
+      storeUnlistenRef.current = editor.store.listen(
         () => {
           if (initializedRef.current) debouncedSave(editor);
         },
@@ -100,6 +101,7 @@ export function useCanvasAutosave(boardId: string) {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
       if (historyIntervalRef.current) clearInterval(historyIntervalRef.current);
+      if (storeUnlistenRef.current) storeUnlistenRef.current();
 
       if (editor && initialized) {
         const snapshot = getSnapshot(editor.store);

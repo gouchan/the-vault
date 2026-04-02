@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { createShapeId, type Editor } from "@tldraw/tldraw";
 import { createBlock } from "@/lib/actions/blocks";
 import { addBlockToBoard } from "@/lib/actions/boards";
@@ -130,6 +130,8 @@ export function useExternalContent(
     [boardId, onBlocksChanged, showToast]
   );
 
+  const eventCleanupRef = useRef<(() => void) | null>(null);
+
   /** Register tldraw external content handlers + double-click. Call in handleMount. */
   const setupExternalHandlers = useCallback(
     (editor: Editor) => {
@@ -159,7 +161,7 @@ export function useExternalContent(
       });
 
       // Double-click → open block detail
-      editor.on("event", (event) => {
+      const handleDoubleClick = (event: any) => {
         if (event.name === "double_click" && event.phase === "up") {
           const selectedShapes = editor.getSelectedShapes();
           if (selectedShapes.length === 1 && selectedShapes[0].type === "vault-block") {
@@ -168,7 +170,9 @@ export function useExternalContent(
             if (block) onBlockClick?.(block);
           }
         }
-      });
+      };
+      editor.on("event", handleDoubleClick);
+      eventCleanupRef.current = () => editor.off("event", handleDoubleClick);
     },
     [handleUrlDrop, handleFileUpload, blocksRef, onBlockClick]
   );
@@ -240,8 +244,9 @@ export function useExternalContent(
     return () => window.removeEventListener("paste", handlePaste);
   }, [editorRef, handleFileUpload, handleUrlDrop]);
 
-  function cleanupToast() {
+  function cleanup() {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    if (eventCleanupRef.current) eventCleanupRef.current();
   }
 
   return {
@@ -249,6 +254,6 @@ export function useExternalContent(
     setupExternalHandlers,
     handleDrop,
     handleDragOver,
-    cleanupToast,
+    cleanup,
   };
 }

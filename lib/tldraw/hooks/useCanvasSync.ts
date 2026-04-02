@@ -31,6 +31,13 @@ export function useCanvasSync(
 ) {
   const knownBlockIdsRef = useRef<Set<string>>(new Set());
   const previewActiveRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Reset mounted flag on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   /** Load snapshot or migrate positions. Call once after mount. */
   const initializeEditor = useCallback(
@@ -40,6 +47,8 @@ export function useCanvasSync(
       // 1. Try existing tldraw snapshot
       try {
         const existing = await getTldrawSnapshot(boardId);
+        // Bail if component unmounted during the fetch
+        if (!mountedRef.current) return;
         if (existing?.snapshot && Object.keys(existing.snapshot).length > 0) {
           loadSnapshot(editor.store, existing.snapshot as any);
           loaded = true;
@@ -47,6 +56,8 @@ export function useCanvasSync(
       } catch (err) {
         console.error("Failed to load snapshot:", err);
       }
+
+      if (!mountedRef.current) return;
 
       // 1b. Snapshot loaded — create shapes for blocks missing from the snapshot
       if (loaded && blocks.length > 0) {

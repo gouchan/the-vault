@@ -130,10 +130,10 @@ export function TldrawCanvas({
   useEffect(() => {
     return () => {
       autosave.cleanup(editorRef.current, initializedRef.current);
-      connector.cleanupToast();
-      content.cleanupToast();
+      connector.cleanup();
+      content.cleanup();
     };
-  }, [boardId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autosave, connector, content]);
 
   // Merge toast messages (connector takes priority since it's more important)
   const toastMessage = connector.toastMessage || content.contentToastMessage;
@@ -147,6 +147,7 @@ export function TldrawCanvas({
       onDragOver={content.handleDragOver}
     >
       <Tldraw
+        key={boardId}
         licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
         shapeUtils={shapeUtils}
         onMount={handleMount}

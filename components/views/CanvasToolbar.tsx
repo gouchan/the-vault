@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tldraw/tldraw";
-import { Plus, ArrowRight, ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { ArrowRight, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 interface CanvasToolbarProps {
   editorRef: React.MutableRefObject<Editor | null>;
@@ -11,22 +11,39 @@ interface CanvasToolbarProps {
 /**
  * Minimal floating toolbar for the canvas.
  * Replaces all tldraw chrome with a clean pill at bottom-center.
+ * Syncs active tool highlight with tldraw's actual current tool.
  */
 export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
-  const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [currentTool, setCurrentTool] = useState("select");
 
-  const handleSelect = useCallback(() => {
+  // Sync with tldraw's current tool via editor events
+  useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    editor.setCurrentTool("select");
-    setActiveTool(null);
+
+    const handleChange = () => {
+      const toolId = editor.getCurrentToolId();
+      setCurrentTool(toolId);
+    };
+
+    // Check immediately
+    handleChange();
+
+    // Listen for tool changes via store
+    const unlisten = editor.store.listen(handleChange, {
+      scope: "session",
+      source: "user",
+    });
+
+    return unlisten;
+  }, [editorRef, editorRef.current]); // re-run when editor becomes available
+
+  const handleSelect = useCallback(() => {
+    editorRef.current?.setCurrentTool("select");
   }, [editorRef]);
 
   const handleArrow = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.setCurrentTool("arrow");
-    setActiveTool("arrow");
+    editorRef.current?.setCurrentTool("arrow");
   }, [editorRef]);
 
   const handleZoomIn = useCallback(() => {
@@ -53,10 +70,10 @@ export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
       className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur-md shadow-lg"
       style={{ pointerEvents: "all" }}
     >
-      {/* Select / pointer (default) */}
+      {/* Select / pointer */}
       <button
         onClick={handleSelect}
-        className={`${btnBase} ${!activeTool ? btnActive : btnDefault}`}
+        className={`${btnBase} ${currentTool === "select" ? btnActive : btnDefault}`}
         title="Select (V)"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -67,7 +84,7 @@ export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
       {/* Connect / arrow */}
       <button
         onClick={handleArrow}
-        className={`${btnBase} ${activeTool === "arrow" ? btnActive : btnDefault}`}
+        className={`${btnBase} ${currentTool === "arrow" ? btnActive : btnDefault}`}
         title="Connect (A)"
       >
         <ArrowRight className="w-4 h-4" />

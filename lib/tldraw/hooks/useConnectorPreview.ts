@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type MutableRefObject } from "react";
 import type { Editor } from "@tldraw/tldraw";
 import type { VaultBlockShape } from "@/lib/tldraw/VaultBlockShape";
 import {
@@ -85,19 +85,22 @@ export function useConnectorPreview(
     [containerRef]
   );
 
+  const cleanupHandlersRef = useRef<(() => void)[]>([]);
+
   /** Register tldraw side-effect handlers. Call in handleMount. */
   const setupConnectorHandlers = useCallback(
     (editor: Editor) => {
-      editor.sideEffects.registerAfterCreateHandler("binding", (binding: any) => {
+      const unsubCreate = editor.sideEffects.registerAfterCreateHandler("binding", (binding: any) => {
         if (binding.type === "arrow") {
           handleArrowBinding(editor, binding.fromId);
         }
       });
-      editor.sideEffects.registerAfterChangeHandler("shape", (_prev, next) => {
+      const unsubChange = editor.sideEffects.registerAfterChangeHandler("shape", (_prev, next) => {
         if (next.type === "arrow") {
           handleArrowBinding(editor, next.id);
         }
       });
+      cleanupHandlersRef.current = [unsubCreate, unsubChange];
     },
     [handleArrowBinding]
   );
@@ -131,9 +134,11 @@ export function useConnectorPreview(
     toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2000);
   }
 
-  /** Clean up toast timeout. */
-  function cleanupToast() {
+  /** Clean up toast timeout + side-effect handlers. */
+  function cleanup() {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    cleanupHandlersRef.current.forEach((fn) => fn());
+    cleanupHandlersRef.current = [];
   }
 
   return {
@@ -143,6 +148,6 @@ export function useConnectorPreview(
     setupConnectorHandlers,
     handleSyncConnection,
     handleSkipConnection,
-    cleanupToast,
+    cleanup,
   };
 }
