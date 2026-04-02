@@ -147,36 +147,41 @@ body {
   --color-grid: rgba(0, 0, 0, 0.06);
 }
 
-/* Moleskine dot grid on the tldraw canvas background */
+/* Subtle dot grid — softer than Moleskine for a cleaner desk feel */
 .tl-background {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 0.8px, transparent 0.8px) !important;
-  background-size: 12px 12px !important;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0.6px, transparent 0.6px) !important;
+  background-size: 16px 16px !important;
 }
 
 .light .tl-background {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.07) 0.8px, transparent 0.8px) !important;
-  background-size: 12px 12px !important;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 0.6px, transparent 0.6px) !important;
+  background-size: 16px 16px !important;
 }
 
 /* tldraw custom shape CSS variables for block rendering */
 :root {
-  --color-card: #444444;
+  --color-card: #333333;
   --color-text: #e8e8e8;
-  --color-border: #505050;
-  --color-muted: #2C2C2C;
+  --color-border: #404040;
+  --color-muted: #262626;
   --color-muted-fg: #999999;
   --color-note-bg: #2a2610;
   --color-note-border: #4d4520;
+  /* Card depth — Spatial-style soft shadows */
+  --vault-card-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.15);
+  --vault-card-shadow-hover: 0 8px 24px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .light {
-  --color-card: #f0f0f0;
+  --color-card: #ffffff;
   --color-text: #1a1a1a;
-  --color-border: #d8d8d5;
-  --color-muted: #e8e8e5;
+  --color-border: #e5e5e3;
+  --color-muted: #f5f5f3;
   --color-muted-fg: #6b6b6b;
-  --color-note-bg: #FFF9DB;
+  --color-note-bg: #FFFDE7;
   --color-note-border: #FFE066;
+  --vault-card-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+  --vault-card-shadow-hover: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
 }
 
 /* ── tldraw watermark — visible per license terms ──────── */

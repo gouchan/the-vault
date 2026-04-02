@@ -6,327 +6,31 @@ import {
   T,
   type TLShape,
 } from "@tldraw/tldraw";
-import { useState, useCallback, useRef, useEffect } from "react";
-import { getYouTubeId, isVideoUrl, isGifUrl } from "@/lib/utils/url-parser";
+import { useState } from "react";
+import { ReferenceMedia } from "./ReferenceMedia";
 
-// ── GIF pause/play + Video play button ─────────────────────────
-function ReferenceMedia({
-  thumbnailUrl,
-  url,
-  youtubeId,
-  isImage,
-  isGif,
-  isVideo,
-  title,
-}: {
-  thumbnailUrl: string;
-  url: string;
-  youtubeId: string | null;
-  isImage: boolean;
-  isGif: boolean;
-  isVideo: boolean;
-  title: string;
-}) {
-  const [gifPaused, setGifPaused] = useState(false);
-  const [staticFrame, setStaticFrame] = useState<string | null>(null);
-  const [imgError, setImgError] = useState(false);
-  const [fetchedImage, setFetchedImage] = useState<string | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
+// ── Shared styles ────────────────────────────────────────────────
+// tldraw shapes run inside HTMLContainer — external CSS classes
+// don't apply, so all styling is inline + CSS custom properties.
 
-  // Lazy OG re-fetch: if shape has a URL but no thumbnail, try to get one
-  useEffect(() => {
-    if (thumbnailUrl || !url || isImage || youtubeId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/og-fetch?url=${encodeURIComponent(url)}`);
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        if (data.image && !cancelled) setFetchedImage(data.image);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, [url, thumbnailUrl, isImage, youtubeId]);
+const CARD_STYLE: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  overflow: "hidden",
+  borderRadius: "12px",
+  border: "1px solid var(--color-border, #27272a)",
+  background: "var(--color-card, #0a0a0c)",
+  color: "var(--color-text, #fafafa)",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
+  display: "flex",
+  flexDirection: "column",
+  pointerEvents: "all",
+  // Spatial-style depth
+  boxShadow: "var(--vault-card-shadow, 0 2px 12px rgba(0,0,0,0.08))",
+  transition: "box-shadow 0.2s ease, transform 0.2s ease",
+};
 
-  const gifSrc = thumbnailUrl || fetchedImage || url || "";
-
-  // Capture the first frame of a GIF for the paused state
-  const captureStaticFrame = useCallback(() => {
-    if (!gifSrc) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          setStaticFrame(canvas.toDataURL("image/png"));
-        }
-      } catch {
-        // CORS or other error — just leave null, GIF will keep playing
-      }
-    };
-    img.src = gifSrc;
-  }, [gifSrc]);
-
-  // Capture static frame on mount for GIFs
-  useEffect(() => {
-    if (isGif) captureStaticFrame();
-  }, [isGif, captureStaticFrame]);
-
-  const handleGifClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setGifPaused((prev) => !prev);
-  }, []);
-
-  const handleVideoClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (url) window.open(url, "_blank");
-    },
-    [url]
-  );
-
-  const rawImageSrc =
-    thumbnailUrl ||
-    fetchedImage ||
-    (isImage ? url : "") ||
-    (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : "");
-
-  // Proxy external URLs so hotlink-protected images load (YouTube thumbnails are fine unproxied)
-  const imageSrc = rawImageSrc && !rawImageSrc.startsWith("/") && !youtubeId
-    ? `/api/img-proxy?url=${encodeURIComponent(rawImageSrc)}`
-    : rawImageSrc;
-
-  const displaySrc = isGif && gifPaused && staticFrame ? staticFrame : imageSrc;
-
-  // Derive hostname + favicon for fallback
-  let hostname = "";
-  try { hostname = new URL(url).hostname; } catch {}
-  const faviconUrl = hostname
-    ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
-    : "";
-
-  const showImage = (thumbnailUrl || fetchedImage || youtubeId || isImage) && !imgError;
-
-  const handleOpenUrl = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (url) window.open(url, "_blank", "noopener");
-  }, [url]);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {showImage ? (
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflow: "hidden",
-            background: "var(--color-muted, #1c1c22)",
-            position: "relative",
-            cursor: isGif ? "pointer" : isVideo ? "pointer" : url ? "pointer" : "default",
-          }}
-          onClick={isGif ? handleGifClick : isVideo ? handleVideoClick : url ? handleOpenUrl : undefined}
-        >
-          <img
-            ref={imgRef}
-            src={displaySrc}
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            onError={() => setImgError(true)}
-          />
-
-          {/* GIF badge + pause/play indicator */}
-          {isGif && (
-            <>
-              <div
-                style={{
-                  position: "absolute",
-                  top: 6,
-                  left: 6,
-                  background: "rgba(0,0,0,0.7)",
-                  color: "#fff",
-                  fontSize: "9px",
-                  fontWeight: 700,
-                  padding: "2px 5px",
-                  borderRadius: "4px",
-                  letterSpacing: "0.5px",
-                  textTransform: "uppercase",
-                }}
-              >
-                GIF
-              </div>
-              {gifPaused && (
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      background: "rgba(0,0,0,0.6)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <svg width="14" height="16" viewBox="0 0 14 16" fill="white">
-                      <polygon points="2,0 14,8 2,16" />
-                    </svg>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Video play button overlay */}
-          {isVideo && !isGif && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.65)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                <svg width="16" height="18" viewBox="0 0 14 16" fill="white">
-                  <polygon points="2,0 14,8 2,16" />
-                </svg>
-              </div>
-            </div>
-          )}
-
-          {/* External link badge (top-right) */}
-          {url && !isGif && !isVideo && (
-            <div
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                background: "rgba(0,0,0,0.6)",
-                borderRadius: "4px",
-                padding: "3px 5px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* No image — favicon + title card with clickable link */
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px",
-            background: "var(--color-muted, #1c1c22)",
-            padding: "16px",
-            cursor: url ? "pointer" : "default",
-          }}
-          onClick={url ? handleOpenUrl : undefined}
-        >
-          {faviconUrl && (
-            <img src={faviconUrl} alt="" style={{ width: 32, height: 32, borderRadius: "6px" }} />
-          )}
-          {!faviconUrl && (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted-fg, #71717a)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          )}
-          {url && (
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted-fg, #71717a)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-              <span style={{ fontSize: "10px", color: "var(--color-muted-fg, #71717a)" }}>
-                {hostname}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-      <div style={{ padding: "8px 10px", flexShrink: 0, borderTop: "1px solid var(--color-border, #27272a)" }}>
-        <div
-          style={{
-            fontSize: "12px",
-            fontWeight: 500,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {title || hostname || "Untitled"}
-        </div>
-        {url && (
-          <div
-            style={{
-              fontSize: "10px",
-              color: "var(--color-muted-fg, #71717a)",
-              marginTop: "2px",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              cursor: "pointer",
-            }}
-            onClick={handleOpenUrl}
-          >
-            {faviconUrl && (
-              <img src={faviconUrl} alt="" style={{ width: 12, height: 12, borderRadius: "2px" }} />
-            )}
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {hostname || url}
-            </span>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Custom shape type declaration ──────────────────────────────
+// ── Custom shape type declaration ────────────────────────────────
 declare module "@tldraw/tldraw" {
   interface TLGlobalShapePropsMap {
     "vault-block": {
@@ -348,7 +52,7 @@ declare module "@tldraw/tldraw" {
 
 export type VaultBlockShape = TLShape<"vault-block">;
 
-// ── Shape Util ─────────────────────────────────────────────────
+// ── Shape Util ───────────────────────────────────────────────────
 export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
   static override type = "vault-block" as const;
   static override props = {
@@ -366,184 +70,229 @@ export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
     tagNames: T.string,
   };
 
-  override canResize() {
-    return true;
-  }
-
-  override canBind() {
-    return true;
-  }
+  override canResize() { return true; }
+  override canBind() { return true; }
 
   getDefaultProps() {
     return {
-      w: 280,
-      h: 200,
-      blockId: "",
-      blockType: "reference",
-      title: "",
-      role: "",
-      avatarUrl: "",
-      thumbnailUrl: "",
-      url: "",
-      mediaType: "",
-      content: "",
-      tagNames: "",
+      w: 280, h: 200,
+      blockId: "", blockType: "reference", title: "", role: "",
+      avatarUrl: "", thumbnailUrl: "", url: "", mediaType: "",
+      content: "", tagNames: "",
     };
   }
 
   component(shape: VaultBlockShape) {
-    const { blockType, title, role, avatarUrl, thumbnailUrl, url, mediaType, content, tagNames } =
-      shape.props;
-    const tags = tagNames ? tagNames.split(",").filter(Boolean) : [];
-    const youtubeId = url ? getYouTubeId(url) : null;
-    const isImage = mediaType === "image" || /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?|$)/i.test(url || "");
-    const isGif = isGifUrl(url || "") || isGifUrl(thumbnailUrl || "");
-    const isVideo = isVideoUrl(url || "") || mediaType === "video" || mediaType === "youtube" || mediaType === "vimeo";
-
-    return (
-      <HTMLContainer
-        style={{
-          width: "100%",
-          height: "100%",
-          overflow: "hidden",
-          borderRadius: "8px",
-          border: "1px solid var(--color-border, #27272a)",
-          background: "var(--color-card, #0a0a0c)",
-          color: "var(--color-text, #fafafa)",
-          fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-          display: "flex",
-          flexDirection: "column",
-          pointerEvents: "all",
-        }}
-      >
-        {/* ─── Person ─── */}
-        {blockType === "person" && (
-          <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px", height: "100%" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: "var(--color-muted, #1c1c22)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "14px",
-                    color: "var(--color-muted-fg, #a1a1aa)",
-                    flexShrink: 0,
-                  }}
-                >
-                  {title?.[0]?.toUpperCase() || "?"}
-                </div>
-              )}
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title || "Untitled"}</div>
-                {role && <div style={{ fontSize: "11px", color: "var(--color-muted-fg, #a1a1aa)" }}>{role}</div>}
-              </div>
-            </div>
-            {tags.length > 0 && (
-              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                {tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      fontSize: "10px",
-                      padding: "1px 6px",
-                      borderRadius: "9999px",
-                      background: "var(--color-muted, #1c1c22)",
-                      color: "var(--color-muted-fg, #a1a1aa)",
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Reference (image-first) ─── */}
-        {blockType === "reference" && (
-          <ReferenceMedia
-            thumbnailUrl={thumbnailUrl}
-            url={url}
-            youtubeId={youtubeId}
-            isImage={isImage}
-            isGif={isGif}
-            isVideo={isVideo}
-            title={title}
-          />
-        )}
-
-        {/* ─── Prompt / Note (sticky style) ─── */}
-        {(blockType === "note" || blockType === "prompt") && (
-          <div
-            style={{
-              padding: "12px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              height: "100%",
-              background: "var(--color-note-bg, #1a1a0e)",
-              borderColor: "var(--color-note-border, #3d3d1a)",
-            }}
-          >
-            <div style={{ fontSize: "12px", fontWeight: 600 }}>{title || "Untitled Note"}</div>
-            {content && (
-              <div
-                style={{
-                  fontSize: "11px",
-                  color: "var(--color-muted-fg, #a1a1aa)",
-                  fontFamily: "monospace",
-                  background: "rgba(0,0,0,0.15)",
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  overflow: "hidden",
-                  flex: 1,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {content.slice(0, 500)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Board ─── */}
-        {blockType === "board" && (
-          <div
-            style={{
-              padding: "12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              gap: "6px",
-            }}
-          >
-            <div style={{ fontSize: "20px" }}>&#x1F4CB;</div>
-            <div style={{ fontSize: "13px", fontWeight: 600 }}>{title || "Untitled Board"}</div>
-          </div>
-        )}
-      </HTMLContainer>
-    );
+    return <VaultCardComponent shape={shape} />;
   }
 
   indicator(shape: VaultBlockShape) {
-    return <rect width={shape.props.w} height={shape.props.h} rx={8} />;
+    return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
   }
 }
 
-// ── Helper: convert Block data to shape props ──────────────────
+// ── Card wrapper with inline hover state ─────────────────────────
+function VaultCardComponent({ shape }: { shape: VaultBlockShape }) {
+  const [hovered, setHovered] = useState(false);
+  const { blockType, title, role, avatarUrl, thumbnailUrl, url, mediaType, content, tagNames } =
+    shape.props;
+  const tags = tagNames ? tagNames.split(",").filter(Boolean) : [];
+
+  const hoverStyle: React.CSSProperties = hovered
+    ? {
+        boxShadow: "var(--vault-card-shadow-hover, 0 8px 32px rgba(0,0,0,0.18))",
+        transform: "translateY(-1px)",
+      }
+    : {};
+
+  return (
+    <HTMLContainer
+      style={{ ...CARD_STYLE, ...hoverStyle }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {blockType === "person" && (
+        <PersonCard title={title} role={role} avatarUrl={avatarUrl} tags={tags} />
+      )}
+
+      {blockType === "reference" && (
+        <ReferenceMedia
+          thumbnailUrl={thumbnailUrl}
+          url={url}
+          title={title}
+          tagCount={tags.length}
+        />
+      )}
+
+      {(blockType === "note" || blockType === "prompt") && (
+        <NoteCard title={title} content={content} tags={tags} />
+      )}
+
+      {blockType === "board" && (
+        <BoardCard title={title} />
+      )}
+    </HTMLContainer>
+  );
+}
+
+// ── Person card ──────────────────────────────────────────────────
+function PersonCard({ title, role, avatarUrl, tags }: {
+  title: string; role: string; avatarUrl: string; tags: string[];
+}) {
+  return (
+    <div style={{ padding: "14px", display: "flex", flexDirection: "column", gap: "10px", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            style={{
+              width: 40, height: 40, borderRadius: "50%",
+              objectFit: "cover", flexShrink: 0,
+              border: "2px solid var(--color-border, #27272a)",
+            }}
+          />
+        ) : (
+          <div style={{
+            width: 40, height: 40, borderRadius: "50%",
+            background: "var(--color-muted, #1c1c22)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "15px", fontWeight: 600,
+            color: "var(--color-muted-fg, #a1a1aa)", flexShrink: 0,
+          }}>
+            {title?.[0]?.toUpperCase() || "?"}
+          </div>
+        )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            fontSize: "13px", fontWeight: 600,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {title || "Untitled"}
+          </div>
+          {role && (
+            <div style={{ fontSize: "11px", color: "var(--color-muted-fg, #a1a1aa)", marginTop: "1px" }}>
+              {role}
+            </div>
+          )}
+        </div>
+      </div>
+      {tags.length > 0 && (
+        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "auto" }}>
+          {tags.slice(0, 4).map((tag, i) => (
+            <span key={i} style={{
+              fontSize: "9px", padding: "2px 7px", borderRadius: "6px",
+              background: "var(--color-muted, #1c1c22)",
+              color: "var(--color-muted-fg, #a1a1aa)",
+            }}>
+              {tag}
+            </span>
+          ))}
+          {tags.length > 4 && (
+            <span style={{
+              fontSize: "9px", padding: "2px 7px", borderRadius: "6px",
+              background: "var(--color-muted, #1c1c22)",
+              color: "var(--color-muted-fg, #a1a1aa)",
+            }}>
+              +{tags.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Note card ────────────────────────────────────────────────────
+function NoteCard({ title, content, tags }: {
+  title: string; content: string; tags: string[];
+}) {
+  return (
+    <div style={{
+      padding: "14px", display: "flex", flexDirection: "column",
+      gap: "8px", height: "100%",
+      background: "var(--color-note-bg, #1a1a0e)",
+    }}>
+      {/* Subtle top accent line */}
+      <div style={{
+        width: "24px", height: "3px", borderRadius: "2px",
+        background: "var(--color-note-border, #4d4520)",
+        marginBottom: "2px",
+      }} />
+      <div style={{ fontSize: "12px", fontWeight: 600, lineHeight: "1.3" }}>
+        {title || "Untitled Note"}
+      </div>
+      {content && (
+        <div style={{
+          fontSize: "11px", lineHeight: "1.5",
+          color: "var(--color-muted-fg, #a1a1aa)",
+          fontFamily: "'SF Mono', 'Menlo', monospace",
+          overflow: "hidden", flex: 1,
+          whiteSpace: "pre-wrap",
+          // Soft fade at the bottom
+          maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+        }}>
+          {content.slice(0, 500)}
+        </div>
+      )}
+      {tags.length > 0 && (
+        <div style={{
+          display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "auto",
+          paddingTop: "6px", borderTop: "1px solid var(--color-note-border, #3d3d1a)",
+        }}>
+          {tags.slice(0, 3).map((tag, i) => (
+            <span key={i} style={{
+              fontSize: "9px", padding: "2px 6px", borderRadius: "6px",
+              background: "rgba(255,224,102,0.15)",
+              color: "var(--sticky-yellow, #FFE066)",
+            }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Board card ───────────────────────────────────────────────────
+function BoardCard({ title }: { title: string }) {
+  return (
+    <div style={{
+      padding: "14px", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      height: "100%", gap: "8px",
+    }}>
+      {/* Stacked cards icon instead of emoji */}
+      <div style={{
+        position: "relative", width: 40, height: 32,
+      }}>
+        <div style={{
+          position: "absolute", left: 4, top: 0,
+          width: 28, height: 20, borderRadius: "4px",
+          background: "var(--color-muted, #1c1c22)",
+          border: "1px solid var(--color-border, #27272a)",
+        }} />
+        <div style={{
+          position: "absolute", left: 0, top: 6,
+          width: 28, height: 20, borderRadius: "4px",
+          background: "var(--color-card, #0a0a0c)",
+          border: "1px solid var(--color-border, #27272a)",
+        }} />
+      </div>
+      <div style={{
+        fontSize: "12px", fontWeight: 600,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        maxWidth: "100%",
+      }}>
+        {title || "Untitled Garland"}
+      </div>
+    </div>
+  );
+}
+
+// ── Helper: convert Block data to shape props ────────────────────
 export function blockToShapeProps(block: {
   id: string;
   type: string;
