@@ -10,6 +10,52 @@ All notable changes to Rosary (formerly The Vault).
 
 ---
 
+## 2026-03-30 — Phase II.5: Command Palette, Tags, Move-to, Covers
+
+### Added
+- **Command palette (Cmd+K) upgraded**: inline URL quick-add with OG fetch, quick note creation, garland targeting row
+- **Tag management**: full CRUD server actions (getTags, createTag, addTagToBlock, removeTagFromBlock, searchTags)
+- **TagInput chip editor**: autocomplete, keyboard navigation, colored tag pills
+- **MoveToGarland component**: dropdown showing all garlands with current membership indicators
+- **Garland cover auto-thumbnail**: first image-bearing child shows as sidebar thumbnail
+- **Block detail page**: interactive tag editing, garland membership badges with links, created/updated metadata
+
+---
+
+## 2026-03-20 — Phase II: Content Types & Upload
+
+### Added
+- **NoteCard**: are.na-style text card with title, content preview, tags
+- **ChannelGrid**: uniform square-card grid (4→3→2→1 responsive columns) with block type badges
+- **Board page 3-way view toggle**: Masonry | Channel | Canvas
+- **DropZone**: drag-drop image upload on grid/channel views (multi-file, 10MB limit)
+- **Canvas file drop support** via tldraw registerExternalContentHandler
+
+---
+
+## 2026-03-19 — Image Proxy & Canvas UX
+
+### Added
+- **Server-side image proxy** (/api/img-proxy) — SSRF-guarded, 24hr cache, bypasses hotlink protection
+- **OG fetch returns proxied URLs** for all new beads
+- **VaultBlockShape proxy layer** for old beads (no DB migration needed)
+- **Clickable links on canvas shapes**: image area, hostname row, external-link badge
+- **Rich no-image fallback**: favicon + hostname, fully clickable
+
+---
+
+## 2026-03-18 — Phase I: Visual Foundation
+
+### Added
+- **Pinterest-style ReferenceCard**: natural image height, hover overlays, favicon
+- **Full-screen lightbox viewer**: Esc to close, click outside to close
+- **Masonry grid tightened**: 5→4→3→2→1 columns, 10px gutter
+- **Dark mode tokens**: #1E1E1E base, #2C2C2C accents
+- **Profile foundation**: Supabase profiles table, /profile page with edit mode
+- **OG image relative URL resolution**
+
+---
+
 ## 2026-02-25 — tldraw License + UX Improvements
 
 ### Added

@@ -1,190 +1,97 @@
 # Rosary
 
-A personal creative curation tool — Notion meets Miro meets Are.na. Collect references, people, notes, and images on infinite canvas moodboards with freehand drawing. String ideas together.
+A personal blackboard for research and idea collection.
 
-Built with Next.js 16, Supabase, tldraw, and Tailwind CSS.
+## What is Rosary?
 
-## Concepts
-
-- **Beads** — individual content units: People, References, Notes
-- **Garlands** — infinite canvas boards that hold and arrange beads spatially
-- **Connectors** — arrows between beads that sync shared fields
+Rosary is a visual thinking tool that combines the intentional block-collecting of Are.na with the image-forward aesthetics of Pinterest. Create infinite canvases to map connections between ideas, collect content from anywhere, and organize your research into coherent boards (garlands). Whether you're gathering reference images, linking concepts, or building mood boards, Rosary lets you think visually in a distraction-free space.
 
 ## Features
 
-- **Beads** — Three types: People, References, Notes. Each is a universal content unit with tags, notes, and metadata
-- **Infinite Canvas** — tldraw-powered garlands with pan, zoom, freehand drawing, shapes, and arrows
-- **Image Upload** — Drag-and-drop, paste, or file-pick images directly onto the canvas
-- **Connectors** — Draw arrows between beads to sync shared fields (tags, URLs, descriptions)
-- **Auto-save** — Canvas state persists automatically with visual save indicator
-- **History Timeline** — Horizontal dot timeline to scrub through garland evolution, preview and restore past states
-- **OG Metadata** — Paste a URL and it auto-fetches title, description, and preview image
-- **Full-text Search** — Postgres-powered search across all beads
-- **Command Palette** — `Cmd+K` to search, create, and navigate
-- **Light/Dark Mode** — Toggle between themes with Moleskine dot-grid background
-- **Collapsible Sidebar** — Expandable nav with drag-reorder garlands, pin favorites to top
-- **Nested Beads** — Garlands can contain other garlands, beads can have children
-- **Help Modal** — Built-in keyboard shortcut reference (`?` or help button in sidebar)
+**Canvas & Connections**
+- Infinite tldraw canvas with custom shapes, text, and connectors
+- Connect beads (blocks) with arrows and sync fields across connections
+- Full drawing toolkit: freehand, shapes, text, arrows, resize handles
+- Canvas history with 60-second snapshot timeline
+
+**Content & Curation**
+- Drag-drop image upload (multi-file, 10MB limit)
+- Pinterest-style masonry grid with automatic OG metadata fetching
+- Are.na-style channel grid view with uniform square cards
+- Server-side image proxy to bypass hotlink protection and CORS
+
+**Organization**
+- Garlands (channels/collections) for organizing beads across themes
+- Block types: Person, Reference, Note, Prompt, Board
+- Full-screen lightbox viewer with Escape/click-to-close
+- Tag system with autocomplete and colored tag pills
+- Move blocks between garlands
+- Drag-reorder garlands in sidebar with pin-to-favorites
+
+**Interaction**
+- Command palette (Cmd+K) for URL quick-add with OG fetch, notes, garland targeting
+- Block detail pages with tag editing and garland membership badges
+- Created/updated timestamps on all blocks
+- Dark mode with carefully tuned colors (#1E1E1E base, #2C2C2C accents)
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| Database | Supabase (Postgres) |
-| Storage | Supabase Storage |
-| Canvas | tldraw v4.3.2 |
-| Styling | Tailwind CSS v4 |
-| UI | Radix primitives, Lucide icons, Framer Motion |
-| Theme | next-themes |
-| Search | cmdk (command palette) |
+- **Framework**: Next.js 16 with App Router
+- **Canvas**: tldraw v4
+- **Database**: Supabase (Postgres + Storage)
+- **Styling**: Tailwind CSS with CVA
+- **Language**: TypeScript
+- **Deployment**: Vercel
+- **UI Components**: Radix UI, Lucide icons
 
-## Setup
+## Getting Started
 
-### Prerequisites
-
-- Node.js 20+
-- A [Supabase](https://supabase.com) project
-
-### 1. Clone and install
-
+### Clone the repository
 ```bash
-git clone https://github.com/gouchan/rosary.git
+git clone https://github.com/gouchan/the-vault.git
 cd the-vault
+```
+
+### Install dependencies
+```bash
 npm install
 ```
 
-### 2. Configure environment
-
-```bash
-cp .env.example .env.local
+### Set up environment variables
+Create a `.env.local` file in the root with your Supabase credentials:
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Edit `.env.local` with your Supabase credentials:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-Find these in your [Supabase dashboard](https://supabase.com/dashboard) under **Settings > API**.
-
-### 3. Set up the database
-
-Open your Supabase SQL Editor and run the contents of [`supabase/setup.sql`](./supabase/setup.sql).
-
-This creates all tables, indexes, triggers, and disables RLS (single-user app).
-
-### 4. Create the storage bucket
-
-In the Supabase dashboard:
-
-1. Go to **Storage** > **New bucket**
-2. Name: `vault-images`
-3. Toggle **Public bucket** on
-4. Create
-
-Or run the storage SQL at the bottom of `supabase/setup.sql` (uncomment the storage section).
-
-### 5. Run the dev server
-
+### Run the development server
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open http://localhost:3000 in your browser.
 
 ## Project Structure
 
 ```
 the-vault/
-├── app/
-│   ├── page.tsx              # Dashboard (pinned + recent blocks)
-│   ├── layout.tsx            # Root layout with providers
-│   ├── board/[id]/page.tsx   # Board detail (grid + canvas views)
-│   ├── block/[id]/page.tsx   # Block detail/edit
-│   ├── people/page.tsx       # People grid
-│   ├── search/page.tsx       # Search results
-│   ├── api/
-│   │   ├── upload/route.ts   # Image upload to Supabase Storage
-│   │   └── og-fetch/route.ts # OG metadata extraction
-│   └── globals.css           # Theme vars, dot grid, tldraw overrides
+├── app/                          # Next.js App Router pages
+│   ├── page.tsx                 # Home (grid view)
+│   ├── board/[id]/              # Board detail page
+│   ├── block/[id]/              # Block detail page
+│   ├── search/                  # Search page
+│   ├── profile/                 # User profile
+│   └── people/                  # People directory
 ├── components/
-│   ├── blocks/               # Block cards (Person, Reference, Prompt, Board)
-│   ├── forms/                # BlockForm, QuickCapture
-│   ├── layout/               # AppShell, Sidebar, CommandPalette
-│   ├── providers/            # Theme + React Query providers
-│   ├── ui/                   # Primitives (button, dialog, input, badge)
-│   └── views/                # GridView, TldrawCanvas, HistoryTimeline
-├── lib/
-│   ├── actions/              # Server actions (blocks, boards, canvas, tldraw)
-│   ├── supabase/             # Supabase client + server helpers
-│   ├── tldraw/               # VaultBlockShape custom shape
-│   └── utils/                # cn(), url-parser
-├── types/
-│   └── block.ts              # TypeScript types
-└── supabase/
-    └── setup.sql             # Complete database schema
+│   ├── layout/                  # Shell, sidebar, command palette, help modal
+│   ├── blocks/                  # ReferenceCard, NoteCard, PersonCard, BoardCard
+│   ├── views/                   # GridView, ChannelGrid, TldrawCanvas, HistoryTimeline
+│   ├── forms/                   # BlockForm, QuickCapture
+│   └── ui/                      # Primitives (input, button, badge, lightbox, tag-input, etc.)
+├── lib/                         # Utilities, API clients, database functions
+├── public/                      # Static assets
+└── package.json
 ```
-
-## Architecture
-
-### Bead System
-
-Everything is a **bead** (internally: `block`). The `blocks` table uses a type discriminator:
-
-| Type | Purpose | Key Fields |
-|------|---------|-----------|
-| `person` | People/contacts | role, avatar_url, social links |
-| `reference` | Links/images/media | url, media_type, OG metadata |
-| `note` | Notes/text | content |
-| `board` | Garland (canvas container) | children via block_connections |
-
-Beads connect to each other through `block_connections` (parent/child relationships). Any bead can be nested inside any garland.
-
-### Canvas System
-
-Each garland has an infinite tldraw canvas. The canvas state (all shapes, drawings, arrows) is stored as a single JSONB snapshot in `canvas_snapshots`. History snapshots are captured every 60 seconds of active editing into `canvas_history`.
-
-Custom `vault-block` shapes render bead data (images, people cards, notes) directly inside tldraw. tldraw's native arrow tool doubles as a connector — drawing an arrow between two beads triggers field syncing.
-
-### Data Flow
-
-```
-User action → Server Action → Supabase → Revalidate → UI Update
-                                ↑
-                          (no REST API)
-                       (direct SQL via SDK)
-```
-
-All data operations use Next.js Server Actions with `"use server"`. No custom API routes for CRUD — just the upload and OG-fetch endpoints.
-
-## Database Schema
-
-8 tables total:
-
-| Table | Purpose |
-|-------|---------|
-| `blocks` | All content (person, reference, prompt, board) |
-| `tags` | Tag definitions |
-| `block_tags` | Block-tag junction |
-| `block_connections` | Parent-child relationships |
-| `canvas_positions` | Legacy position data (migrated to snapshots) |
-| `canvas_connectors` | Visual connections between blocks |
-| `canvas_snapshots` | tldraw state per board |
-| `canvas_history` | Timeline of board evolution |
-
-## Security Notes
-
-- **Single-user app** — RLS is disabled on all tables. If deploying for multiple users, enable RLS and add policies
-- **Supabase anon key** — The `NEXT_PUBLIC_SUPABASE_ANON_KEY` is designed to be public (used in browser). It only grants access based on RLS policies
-- **No authentication** — Add Supabase Auth if needed for multi-user
-- **Image uploads** — Validated server-side (image types only, 10MB max)
-- **Environment variables** — All secrets in `.env.local`, never committed
-
-## Canvas License
-
-The infinite canvas uses [tldraw](https://tldraw.dev) under their SDK license with a hobby license key. The license is configured via the `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` environment variable and is valid for `*.the-vault-one.vercel.app` through 2031. Set this in both `.env.local` and your Vercel project environment variables.
 
 ## License
 
