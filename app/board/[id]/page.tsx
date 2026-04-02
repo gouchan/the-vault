@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import type { Block, BlockType, CanvasPosition } from "@/types/block";
 import { Grid3x3, LayoutGrid, Pencil, Plus, User, Link2, FileText, Clock, Image as ImageIcon, ArrowRight, Loader2 } from "lucide-react";
 import { DropZone } from "@/components/ui/drop-zone";
-import type { Editor } from "@tldraw/tldraw";
+
 import { uploadImageAndCreateBlock } from "@/lib/utils/upload-image";
 import { createBlock } from "@/lib/actions/blocks";
 import { isValidUrl, normalizeUrl, detectMediaType } from "@/lib/utils/url-parser";
@@ -44,7 +44,7 @@ export default function BoardPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tldrawEditor, setTldrawEditor] = useState<Editor | null>(null);
+
   const [urlInput, setUrlInput] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
 
@@ -171,19 +171,6 @@ export default function BoardPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Connect tool (canvas only) */}
-          {view === "canvas" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => tldrawEditor?.setCurrentTool("arrow")}
-              title="Draw a connector between two beads (A)"
-              className="h-8"
-            >
-              <ArrowRight className="h-4 w-4 mr-1" /> Connect
-            </Button>
-          )}
-
           {/* History toggle (canvas only) */}
           {view === "canvas" && (
             <Button
@@ -268,7 +255,7 @@ export default function BoardPage() {
                 else router.push(`/block/${block.id}`);
               }}
               onBlocksChanged={loadBoard}
-              onEditorReady={setTldrawEditor}
+              onEditorReady={() => {}}
             />
           </div>
 
