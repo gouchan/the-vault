@@ -1,24 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Editor } from "@tldraw/tldraw";
+import { createShapeId, type Editor } from "@tldraw/tldraw";
 import { ArrowRight, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 interface CanvasToolbarProps {
-  editorRef: React.MutableRefObject<Editor | null>;
+  editor: Editor | null;
 }
 
-/**
- * Minimal floating toolbar for the canvas.
- * Replaces all tldraw chrome with a clean pill at bottom-center.
- * Syncs active tool highlight with tldraw's actual current tool.
- */
-export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
+export function CanvasToolbar({ editor }: CanvasToolbarProps) {
   const [currentTool, setCurrentTool] = useState("select");
 
-  // Sync with tldraw's current tool via editor events
   useEffect(() => {
-    const editor = editorRef.current;
     if (!editor) return;
 
     const handleChange = () => {
@@ -26,37 +19,55 @@ export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
       setCurrentTool(toolId);
     };
 
-    // Check immediately
     handleChange();
 
-    // Listen for tool changes via store
     const unlisten = editor.store.listen(handleChange, {
       scope: "session",
       source: "user",
     });
 
     return unlisten;
-  }, [editorRef, editorRef.current]); // re-run when editor becomes available
+  }, [editor]);
 
   const handleSelect = useCallback(() => {
-    editorRef.current?.setCurrentTool("select");
-  }, [editorRef]);
+    editor?.setCurrentTool("select");
+  }, [editor]);
 
   const handleArrow = useCallback(() => {
-    editorRef.current?.setCurrentTool("arrow");
-  }, [editorRef]);
+    editor?.setCurrentTool("arrow");
+  }, [editor]);
+
+  const handleCreateCluster = useCallback(() => {
+    if (!editor) return;
+
+    const center = editor.getViewportScreenCenter();
+    const pagePoint = editor.screenToPage(center);
+    const id = createShapeId();
+
+    editor.createShapes([{
+      id,
+      type: "vault-cluster",
+      x: pagePoint.x - 160,
+      y: pagePoint.y - 100,
+      props: { w: 320, h: 200, title: "Cluster", collapsed: false },
+    }]);
+
+    // Select the new cluster
+    editor.select(id);
+    editor.setCurrentTool("select");
+  }, [editor]);
 
   const handleZoomIn = useCallback(() => {
-    editorRef.current?.zoomIn();
-  }, [editorRef]);
+    editor?.zoomIn();
+  }, [editor]);
 
   const handleZoomOut = useCallback(() => {
-    editorRef.current?.zoomOut();
-  }, [editorRef]);
+    editor?.zoomOut();
+  }, [editor]);
 
   const handleZoomFit = useCallback(() => {
-    editorRef.current?.zoomToFit({ animation: { duration: 300 } });
-  }, [editorRef]);
+    editor?.zoomToFit({ animation: { duration: 300 } });
+  }, [editor]);
 
   const btnBase =
     "flex items-center justify-center w-8 h-8 rounded-md transition-colors duration-150";
@@ -88,6 +99,20 @@ export function CanvasToolbar({ editorRef }: CanvasToolbarProps) {
         title="Connect (A)"
       >
         <ArrowRight className="w-4 h-4" />
+      </button>
+
+      {/* Create cluster */}
+      <button
+        onClick={handleCreateCluster}
+        className={`${btnBase} ${btnDefault}`}
+        title="Create cluster"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
       </button>
 
       {/* Divider */}

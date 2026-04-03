@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { Tldraw, type Editor } from "@tldraw/tldraw";
 import "@tldraw/tldraw/tldraw.css";
 import { useTheme } from "next-themes";
 import type { Block, CanvasPosition } from "@/types/block";
 import { VaultBlockShapeUtil } from "@/lib/tldraw/VaultBlockShape";
+import { VaultClusterShapeUtil } from "@/lib/tldraw/VaultClusterShape";
 import { ConnectorPreviewSheet } from "./ConnectorPreviewSheet";
 
 // Hooks
@@ -17,7 +18,7 @@ import { useExternalContent } from "@/lib/tldraw/hooks/useExternalContent";
 // Canvas floating toolbar
 import { CanvasToolbar } from "@/components/views/CanvasToolbar";
 
-const shapeUtils = [VaultBlockShapeUtil];
+const shapeUtils = [VaultBlockShapeUtil, VaultClusterShapeUtil];
 
 // ── Null components to strip all tldraw chrome ──────────────────
 const HIDDEN_UI = {
@@ -61,6 +62,7 @@ export function TldrawCanvas({
   resolvedThemeRef.current = resolvedTheme;
 
   const editorRef = useRef<Editor | null>(null);
+  const [editorState, setEditorState] = useState<Editor | null>(null);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const initializedRef = useRef(false);
@@ -102,6 +104,7 @@ export function TldrawCanvas({
   const handleMount = useCallback(
     (editor: Editor) => {
       editorRef.current = editor;
+      setEditorState(editor);
       onEditorReady?.(editor);
 
       // Theme
@@ -158,7 +161,7 @@ export function TldrawCanvas({
       />
 
       {/* Custom floating toolbar */}
-      <CanvasToolbar editorRef={editorRef} />
+      <CanvasToolbar editor={editorState} />
 
       {/* Autosave indicator */}
       <div
