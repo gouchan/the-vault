@@ -160,21 +160,58 @@ export function useExternalContent(
         }
       });
 
-      // Double-click → open block detail
-      const handleDoubleClick = (event: any) => {
-        if (event.name === "double_click" && event.phase === "up") {
-          const selectedShapes = editor.getSelectedShapes();
-          if (selectedShapes.length === 1 && selectedShapes[0].type === "vault-block") {
-            const shape = selectedShapes[0] as any;
-            const block = blocksRef.current.find((b) => b.id === shape.props.blockId);
-            if (block) onBlockClick?.(block);
+      // Double-click → open block detail OR create note on empty space
+      const handleDoubleClick = async (event: any) => {
+        if (event.name !== "double_click" || event.phase !== "up") return;
+
+        const selectedShapes = editor.getSelectedShapes();
+
+        // If a vault-block is selected, open its detail
+        if (selectedShapes.length === 1 && selectedShapes[0].type === "vault-block") {
+          const shape = selectedShapes[0] as any;
+          const block = blocksRef.current.find((b) => b.id === shape.props.blockId);
+          if (block) onBlockClick?.(block);
+          return;
+        }
+
+        // Double-click on empty space → create a note card at that point
+        if (selectedShapes.length === 0) {
+          try {
+            const pointerScreen = editor.inputs.currentScreenPoint;
+            const pagePoint = editor.screenToPage(pointerScreen);
+
+            const block = await createBlock({
+              type: "note",
+              title: "",
+              content: "",
+            });
+            await addBlockToBoard(boardId, block.id);
+
+            const id = createShapeId(`vault-${block.id}`);
+            editor.createShapes([{
+              id,
+              type: "vault-block",
+              x: pagePoint.x - 140,
+              y: pagePoint.y - 50,
+              props: {
+                w: 280,
+                h: 100,
+                ...blockToShapeProps(block),
+              },
+            }]);
+
+            editor.select(id);
+            onBlocksChanged?.();
+            showToast("Note created");
+          } catch (err) {
+            console.error("Failed to create note:", err);
           }
         }
       };
       editor.on("event", handleDoubleClick);
       eventCleanupRef.current = () => editor.off("event", handleDoubleClick);
     },
-    [handleUrlDrop, handleFileUpload, blocksRef, onBlockClick]
+    [handleUrlDrop, handleFileUpload, blocksRef, onBlockClick, boardId, onBlocksChanged, showToast]
   );
 
   // ── React drop/paste handlers (outside tldraw's system) ─────────

@@ -18,7 +18,7 @@ const CARD_STYLE: React.CSSProperties = {
   height: "100%",
   overflow: "hidden",
   borderRadius: "12px",
-  border: "1px solid var(--color-border, #27272a)",
+  border: "1px solid rgba(255,255,255,0.06)",
   background: "var(--color-card, #0a0a0c)",
   color: "var(--color-text, #fafafa)",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
@@ -94,9 +94,9 @@ export class VaultBlockShapeUtil extends BaseBoxShapeUtil<VaultBlockShape> {
 // ── Card wrapper with inline hover state ─────────────────────────
 function VaultCardComponent({ shape }: { shape: VaultBlockShape }) {
   const [hovered, setHovered] = useState(false);
-  const { blockType, title, role, avatarUrl, thumbnailUrl, url, mediaType, content, tagNames } =
+  const { blockType, title, role, avatarUrl, thumbnailUrl, url, content, tagNames } =
     shape.props;
-  const tags = tagNames ? tagNames.split(",").filter(Boolean) : [];
+  const tagCount = tagNames ? tagNames.split(",").filter(Boolean).length : 0;
 
   const hoverStyle: React.CSSProperties = hovered
     ? {
@@ -112,7 +112,7 @@ function VaultCardComponent({ shape }: { shape: VaultBlockShape }) {
       onMouseLeave={() => setHovered(false)}
     >
       {blockType === "person" && (
-        <PersonCard title={title} role={role} avatarUrl={avatarUrl} tags={tags} />
+        <PersonCard title={title} role={role} avatarUrl={avatarUrl} />
       )}
 
       {blockType === "reference" && (
@@ -120,12 +120,12 @@ function VaultCardComponent({ shape }: { shape: VaultBlockShape }) {
           thumbnailUrl={thumbnailUrl}
           url={url}
           title={title}
-          tagCount={tags.length}
+          tagCount={tagCount}
         />
       )}
 
       {(blockType === "note" || blockType === "prompt") && (
-        <NoteCard title={title} content={content} tags={tags} />
+        <NoteCard title={title} content={content} />
       )}
 
       {blockType === "board" && (
@@ -136,120 +136,80 @@ function VaultCardComponent({ shape }: { shape: VaultBlockShape }) {
 }
 
 // ── Person card ──────────────────────────────────────────────────
-function PersonCard({ title, role, avatarUrl, tags }: {
-  title: string; role: string; avatarUrl: string; tags: string[];
+function PersonCard({ title, role, avatarUrl }: {
+  title: string; role: string; avatarUrl: string;
 }) {
   return (
-    <div style={{ padding: "14px", display: "flex", flexDirection: "column", gap: "10px", height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt=""
-            style={{
-              width: 40, height: 40, borderRadius: "50%",
-              objectFit: "cover", flexShrink: 0,
-              border: "2px solid var(--color-border, #27272a)",
-            }}
-          />
-        ) : (
-          <div style={{
-            width: 40, height: 40, borderRadius: "50%",
-            background: "var(--color-muted, #1c1c22)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "15px", fontWeight: 600,
-            color: "var(--color-muted-fg, #a1a1aa)", flexShrink: 0,
-          }}>
-            {title?.[0]?.toUpperCase() || "?"}
-          </div>
-        )}
-        <div style={{ minWidth: 0 }}>
-          <div style={{
-            fontSize: "13px", fontWeight: 600,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>
-            {title || "Untitled"}
-          </div>
-          {role && (
-            <div style={{ fontSize: "11px", color: "var(--color-muted-fg, #a1a1aa)", marginTop: "1px" }}>
-              {role}
-            </div>
-          )}
-        </div>
-      </div>
-      {tags.length > 0 && (
-        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "auto" }}>
-          {tags.slice(0, 4).map((tag, i) => (
-            <span key={i} style={{
-              fontSize: "9px", padding: "2px 7px", borderRadius: "6px",
-              background: "var(--color-muted, #1c1c22)",
-              color: "var(--color-muted-fg, #a1a1aa)",
-            }}>
-              {tag}
-            </span>
-          ))}
-          {tags.length > 4 && (
-            <span style={{
-              fontSize: "9px", padding: "2px 7px", borderRadius: "6px",
-              background: "var(--color-muted, #1c1c22)",
-              color: "var(--color-muted-fg, #a1a1aa)",
-            }}>
-              +{tags.length - 4}
-            </span>
-          )}
+    <div style={{ padding: "14px", display: "flex", alignItems: "center", gap: "10px", height: "100%" }}>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          style={{
+            width: 36, height: 36, borderRadius: "50%",
+            objectFit: "cover", flexShrink: 0,
+          }}
+        />
+      ) : (
+        <div style={{
+          width: 36, height: 36, borderRadius: "50%",
+          background: "var(--color-muted, #1c1c22)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "14px", fontWeight: 600,
+          color: "var(--color-muted-fg, #a1a1aa)", flexShrink: 0,
+        }}>
+          {title?.[0]?.toUpperCase() || "?"}
         </div>
       )}
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontSize: "13px", fontWeight: 600,
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
+          {title || "Untitled"}
+        </div>
+        {role && (
+          <div style={{ fontSize: "11px", color: "var(--color-muted-fg, #a1a1aa)", marginTop: "2px" }}>
+            {role}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // ── Note card ────────────────────────────────────────────────────
-function NoteCard({ title, content, tags }: {
-  title: string; content: string; tags: string[];
+function NoteCard({ title, content }: {
+  title: string; content: string;
 }) {
   return (
     <div style={{
       padding: "14px", display: "flex", flexDirection: "column",
-      gap: "8px", height: "100%",
-      background: "var(--color-note-bg, #1a1a0e)",
+      gap: "6px", height: "100%",
     }}>
-      {/* Subtle top accent line */}
-      <div style={{
-        width: "24px", height: "3px", borderRadius: "2px",
-        background: "var(--color-note-border, #4d4520)",
-        marginBottom: "2px",
-      }} />
-      <div style={{ fontSize: "12px", fontWeight: 600, lineHeight: "1.3" }}>
-        {title || "Untitled Note"}
-      </div>
+      {title && (
+        <div style={{ fontSize: "12px", fontWeight: 600, lineHeight: "1.3" }}>
+          {title}
+        </div>
+      )}
       {content && (
         <div style={{
           fontSize: "11px", lineHeight: "1.5",
           color: "var(--color-muted-fg, #a1a1aa)",
-          fontFamily: "'SF Mono', 'Menlo', monospace",
           overflow: "hidden", flex: 1,
           whiteSpace: "pre-wrap",
-          // Soft fade at the bottom
           maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
           WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
         }}>
           {content.slice(0, 500)}
         </div>
       )}
-      {tags.length > 0 && (
+      {!title && !content && (
         <div style={{
-          display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "auto",
-          paddingTop: "6px", borderTop: "1px solid var(--color-note-border, #3d3d1a)",
+          fontSize: "11px", color: "var(--color-muted-fg, #a1a1aa)",
+          fontStyle: "italic",
         }}>
-          {tags.slice(0, 3).map((tag, i) => (
-            <span key={i} style={{
-              fontSize: "9px", padding: "2px 6px", borderRadius: "6px",
-              background: "rgba(255,224,102,0.15)",
-              color: "var(--sticky-yellow, #FFE066)",
-            }}>
-              {tag}
-            </span>
-          ))}
+          Empty note
         </div>
       )}
     </div>

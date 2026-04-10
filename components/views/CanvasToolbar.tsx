@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createShapeId, type Editor } from "@tldraw/tldraw";
+import type { Editor } from "@tldraw/tldraw";
 import { ArrowRight, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 interface CanvasToolbarProps {
@@ -56,26 +56,6 @@ export function CanvasToolbar({ editor }: CanvasToolbarProps) {
 
   const handleArrow = useCallback(() => {
     editor?.setCurrentTool("arrow");
-  }, [editor]);
-
-  const handleCreateCluster = useCallback(() => {
-    if (!editor) return;
-
-    const center = editor.getViewportScreenCenter();
-    const pagePoint = editor.screenToPage(center);
-    const id = createShapeId();
-
-    editor.createShapes([{
-      id,
-      type: "vault-cluster",
-      x: pagePoint.x - 160,
-      y: pagePoint.y - 100,
-      props: { w: 320, h: 200, title: "Cluster", collapsed: false },
-    }]);
-
-    // Select the new cluster
-    editor.select(id);
-    editor.setCurrentTool("select");
   }, [editor]);
 
   const handleZoomIn = useCallback(() => {
@@ -133,20 +113,6 @@ export function CanvasToolbar({ editor }: CanvasToolbarProps) {
         title="Connect (A)"
       >
         <ArrowRight className="w-4 h-4" />
-      </button>
-
-      {/* Create cluster */}
-      <button
-        onClick={handleCreateCluster}
-        className={`${btnBase} ${btnDefault}`}
-        title="Create cluster"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-        </svg>
       </button>
 
       {/* Divider */}

@@ -14,6 +14,7 @@ import { useCanvasAutosave } from "@/lib/tldraw/hooks/useCanvasAutosave";
 import { useCanvasSync } from "@/lib/tldraw/hooks/useCanvasSync";
 import { useConnectorPreview } from "@/lib/tldraw/hooks/useConnectorPreview";
 import { useExternalContent } from "@/lib/tldraw/hooks/useExternalContent";
+import { useAutoStack } from "@/lib/tldraw/hooks/useAutoStack";
 
 // Canvas floating toolbar
 import { CanvasToolbar } from "@/components/views/CanvasToolbar";
@@ -84,6 +85,8 @@ export function TldrawCanvas({
 
   const connector = useConnectorPreview(containerRef);
 
+  const autoStack = useAutoStack();
+
   const content = useExternalContent(
     boardId,
     editorRef,
@@ -125,8 +128,11 @@ export function TldrawCanvas({
 
       // External content (URL, file, text drops + double-click)
       content.setupExternalHandlers(editor);
+
+      // Auto-stack: drag card onto card → creates cluster
+      autoStack.setup(editor);
     },
-    [sync, autosave, connector, content, onEditorReady]
+    [sync, autosave, connector, content, autoStack, onEditorReady]
   );
 
   // ── Cleanup ────────────────────────────────────────────────────
@@ -135,8 +141,9 @@ export function TldrawCanvas({
       autosave.cleanup(editorRef.current, initializedRef.current);
       connector.cleanup();
       content.cleanup();
+      autoStack.cleanup();
     };
-  }, [autosave, connector, content]);
+  }, [autosave, connector, content, autoStack]);
 
   // Merge toast messages (connector takes priority since it's more important)
   const toastMessage = connector.toastMessage || content.contentToastMessage;
