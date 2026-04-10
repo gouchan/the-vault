@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #1E1E1E;
+  --background: #141414;
   --foreground: #e8e8e8;
   --card: #444444;
   --card-foreground: #e8e8e8;
@@ -69,10 +69,9 @@ body {
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Moleskine dot grid background */
+/* Dark desk — pure surface, no grid */
 .dot-grid {
-  background-image: radial-gradient(circle, var(--dot-color) 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
+  background-color: var(--background);
 }
 
 :root {
@@ -147,15 +146,15 @@ body {
   --color-grid: rgba(0, 0, 0, 0.06);
 }
 
-/* Subtle dot grid — softer than Moleskine for a cleaner desk feel */
+/* Pure dark desk — no grid, no pattern */
 .tl-background {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0.6px, transparent 0.6px) !important;
-  background-size: 16px 16px !important;
+  background-image: none !important;
+  background-color: var(--background) !important;
 }
 
 .light .tl-background {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 0.6px, transparent 0.6px) !important;
-  background-size: 16px 16px !important;
+  background-image: none !important;
+  background-color: var(--background) !important;
 }
 
 /* tldraw custom shape CSS variables for block rendering */

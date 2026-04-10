@@ -1,24 +1,54 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { CommandPalette } from "./CommandPalette";
 
-const SIDEBAR_KEY = "vault-sidebar-collapsed";
+const HIDE_DELAY = 400;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+  const [visible, setVisible] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Persist sidebar state
+  // On non-board pages, show sidebar by default (pinned).
+  // On board pages, hide it by default so the canvas gets full screen.
+  const isBoardPage = pathname?.startsWith("/board/") ?? false;
+
   useEffect(() => {
-    const saved = localStorage.getItem(SIDEBAR_KEY);
-    if (saved === "true") setCollapsed(true);
+    if (!isBoardPage) {
+      setPinned(true);
+      setVisible(true);
+    } else {
+      setPinned(false);
+      setVisible(false);
+    }
+  }, [isBoardPage]);
+
+  const clearHideTimer = () => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+
+  const scheduleHide = useCallback(() => {
+    if (pinned) return;
+    clearHideTimer();
+    hideTimer.current = setTimeout(() => setVisible(false), HIDE_DELAY);
+  }, [pinned]);
+
+  const showSidebar = useCallback(() => {
+    clearHideTimer();
+    setVisible(true);
   }, []);
 
-  const handleToggle = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(SIDEBAR_KEY, String(next));
+  const togglePin = useCallback(() => {
+    setPinned((p) => {
+      const next = !p;
+      if (next) setVisible(true);
       return next;
     });
   }, []);
@@ -27,9 +57,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.dispatchEvent(new CustomEvent("vault:refresh"));
   }, []);
 
+  useEffect(() => () => clearHideTimer(), []);
+
   return (
-    <div className="flex h-screen">
-      <Sidebar collapsed={collapsed} onToggle={handleToggle} />
+    <div className="flex h-screen relative">
+      {/* Hover trigger zone on the left edge (only on board pages) */}
+      {isBoardPage && !visible && (
+        <div
+          className="fixed top-0 left-0 h-full w-3 z-40"
+          onMouseEnter={showSidebar}
+        />
+      )}
+
+      {/* Sidebar — slides in/out on board pages, static elsewhere */}
+      <div
+        className={`${
+          isBoardPage
+            ? "fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-out"
+            : "relative"
+        } ${isBoardPage && !visible ? "-translate-x-full" : "translate-x-0"}`}
+        onMouseEnter={isBoardPage ? showSidebar : undefined}
+        onMouseLeave={isBoardPage ? scheduleHide : undefined}
+      >
+        <Sidebar collapsed={false} onToggle={togglePin} />
+      </div>
+
       <main className="flex-1 overflow-y-auto dot-grid">
         {children}
       </main>

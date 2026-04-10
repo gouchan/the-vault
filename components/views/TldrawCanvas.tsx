@@ -144,8 +144,7 @@ export function TldrawCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative w-full rounded-lg overflow-hidden border border-[var(--border)]"
-      style={{ height: "100%", minHeight: "300px" }}
+      className="relative w-full h-full overflow-hidden"
       onDrop={content.handleDrop}
       onDragOver={content.handleDragOver}
     >
@@ -163,18 +162,13 @@ export function TldrawCanvas({
       {/* Custom floating toolbar */}
       <CanvasToolbar editor={editorState} />
 
-      {/* Autosave indicator */}
+      {/* Autosave dot — tiny, muted, only on active save */}
       <div
-        className={`absolute bottom-3 right-3 text-xs px-2 py-1 rounded-md transition-opacity duration-300 ${
-          autosave.saveStatus === "idle" ? "opacity-0" : "opacity-100"
-        } ${
-          autosave.saveStatus === "saving"
-            ? "bg-[var(--sticky-yellow)]/20 text-[var(--sticky-yellow)]"
-            : "bg-[var(--sticky-yellow)]/10 text-[var(--sticky-yellow)]/70"
+        className={`absolute bottom-3 right-3 w-1.5 h-1.5 rounded-full transition-opacity duration-500 pointer-events-none ${
+          autosave.saveStatus === "saving" ? "opacity-60" : "opacity-0"
         }`}
-      >
-        {autosave.saveStatus === "saving" ? "Saving..." : "Saved"}
-      </div>
+        style={{ background: "var(--sticky-yellow)" }}
+      />
 
       {/* Connector preview sheet */}
       {connector.pendingConnection && (

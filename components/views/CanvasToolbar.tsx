@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createShapeId, type Editor } from "@tldraw/tldraw";
 import { ArrowRight, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
@@ -8,8 +8,29 @@ interface CanvasToolbarProps {
   editor: Editor | null;
 }
 
+const HIDE_DELAY = 600;
+
 export function CanvasToolbar({ editor }: CanvasToolbarProps) {
   const [currentTool, setCurrentTool] = useState("select");
+  const [visible, setVisible] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHide = () => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+  const show = useCallback(() => {
+    clearHide();
+    setVisible(true);
+  }, []);
+  const scheduleHide = useCallback(() => {
+    clearHide();
+    hideTimer.current = setTimeout(() => setVisible(false), HIDE_DELAY);
+  }, []);
+
+  useEffect(() => () => clearHide(), []);
 
   useEffect(() => {
     if (!editor) return;
@@ -77,10 +98,23 @@ export function CanvasToolbar({ editor }: CanvasToolbarProps) {
     "text-[var(--sticky-yellow)] bg-[var(--sticky-yellow)]/15";
 
   return (
-    <div
-      className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur-md shadow-lg"
-      style={{ pointerEvents: "all" }}
-    >
+    <>
+      {/* Invisible hover trigger at the bottom edge */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-16 z-40"
+        onMouseEnter={show}
+        onMouseLeave={scheduleHide}
+      />
+
+      {/* The toolbar itself */}
+      <div
+        onMouseEnter={show}
+        onMouseLeave={scheduleHide}
+        className={`absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur-md shadow-lg transition-all duration-300 ease-out ${
+          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+        style={{ pointerEvents: visible ? "all" : "none" }}
+      >
       {/* Select / pointer */}
       <button
         onClick={handleSelect}
@@ -128,6 +162,7 @@ export function CanvasToolbar({ editor }: CanvasToolbarProps) {
       <button onClick={handleZoomIn} className={`${btnBase} ${btnDefault}`} title="Zoom in">
         <ZoomIn className="w-4 h-4" />
       </button>
-    </div>
+      </div>
+    </>
   );
 }
